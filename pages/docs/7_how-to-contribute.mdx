@@ -1,21 +1,38 @@
+---
+title: How to Contribute?
+description: This section contains the different areas where your help is most needed.
+---
+
+import { Callout } from 'nextra/components'
+import { Hammer, Lightbulb, Book, MessageCircleQuestion } from 'lucide-react'
+
+
+export const section_icon = { display: 'inline', size: '1rem', marginBottom: '0.25rem' }    
+
 <div className="section-title">How to Contribute?</div>
 
 Rig is an open-source project and we welcome contributions from the community. 
 Whether you're a developer, designer, or writer, there are many ways to contribute to the project. 
 The section below outlines the different areas where your help is most needed.
 
-## 🛠️ Development
+<Callout type="info" emoji="👋">
+**Prior to starting the work on a new feature or change**, make sure to search for existing issues and pull requests on the [GitHub repository](https://github.com/0xPlaygrounds/rig/issues) to discuss your ideas or changes. Open an issue if there is none.
+</Callout>
+
+## <><Hammer style={section_icon}/> Development </>
 ### Model Provider Integrations
 Rig aims to support a wide range of language models from different providers.
 If your favorite model provide is not supported, consider adding support for it in Rig and making a pull request for it!
 
 Important information about model provider integrations:
-- Each model provider integration is contained in its own module under [`rig-core/src/providers`](https://github.com/0xPlaygrounds/rig/tree/main/rig-core/src/providers).
+- Each **model provider integration** is contained in its own module under [`rig-core/src/providers`](https://github.com/0xPlaygrounds/rig/tree/main/rig-core/src/providers).
 - If the provider has an OpenAI compatible API, there is no need to write a new provider module since Rig already supports OpenAI. 
 Instead, you can simply add documentation indicating how you can use the existing [`openai`](https://github.com/0xPlaygrounds/rig/blob/main/rig-core/src/providers/openai.rs) integration to use the new provider.
-- ❗Model provider integrations should not require new dependencies that are not already included in the project. 
-If you need to add a new dependency, please open an issue for the integration to discuss it first.
 - Make sure to follow the repository's [contribution guidelines](https://github.com/0xPlaygrounds/rig/blob/main/CONTRIBUTING.md).
+
+<Callout type="warning" emoji="⚠️">
+Model provider integrations should not require new dependencies that are not already included in the project. 
+</Callout>
 
 ### Vector Store Integrations
 Rig aims to support a wide range of vector stores for storing and retrieving embeddings. 
@@ -33,7 +50,7 @@ If you find a bug in Rig, please open an issue for it on the [repository](https:
 
 Make sure to follow the repository's [contribution guidelines](https://github.com/0xPlaygrounds/rig/blob/main/CONTRIBUTING.md).
 
-## 📝 Documentation
+## <><Book style={section_icon}/> Documentation </>
 ### Guides and Tutorials
 If you have experience with Rig and would like to share your knowledge with others, consider writing a guide or tutorial for the project!
 
@@ -42,7 +59,7 @@ If you would like your tutorial to be featured on this website, please open a pu
 ### Other Documentation Improvements
 If you find a typo or mistake in the documentation, or any section that could use improvement, please open an issue to report it or a pull request to fix it on the [docs repository](https://github.com/0xPlaygrounds/rig-docs).
 
-## 🧠 Ideas and Feedback
+## <><Lightbulb style={section_icon}/> Ideas and Feedback </>
 If you have an idea for a new Rig feature or feedback on existing features, please let us know by opening an issue on the [GitHub repository](https://github.com/0xPlaygrounds/rig/issues)!
 
 Make sure to checkout the existing issues first to make sure your idea is not already planned or in progress 😉.

@@ -1,4 +1,4 @@
-import { Blocks, Lightbulb, CircleHelp, DraftingCompass, Landmark, Puzzle, Rocket, Unplug, MessageCircleQuestion } from "lucide-react";
+import { Blocks, Lightbulb, CircleHelp, DraftingCompass, Landmark, Puzzle, Rocket, Unplug, MessageCircleQuestion, HeartHandshake } from "lucide-react";
 
 const iconStyle = {
   width: '1rem',
@@ -13,7 +13,8 @@ const meta = {
   "3_architecture": {title: <><Landmark style={iconStyle} /> &nbsp; Architecture</>},
   "4_concepts": {title: <><Puzzle style={iconStyle} /> &nbsp; Concepts</>},
   "5_integrations": {title: <><Unplug style={iconStyle} /> &nbsp; Integrations</>},
-  "6_extensions": {title: <><Blocks style={iconStyle} /> &nbsp; Extensions</>}
+  "6_extensions": {title: <><Blocks style={iconStyle} /> &nbsp; Extensions</>},
+  "7_how-to-contribute": {title: <><HeartHandshake style={iconStyle} /> &nbsp; Contribute to Rig</>}
 }
 
 export default meta;

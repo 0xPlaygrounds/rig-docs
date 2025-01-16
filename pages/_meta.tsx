@@ -1,4 +1,4 @@
-import { Home, BookText, PocketKnife, CookingPot } from 'lucide-react'
+import { Home, BookText, PocketKnife, CookingPot, SquareArrowOutUpRight, ExternalLink } from 'lucide-react'
 
 const iconStyle = {
   width: '1rem',
@@ -26,13 +26,13 @@ const meta = {
     "type": "page"
   },
   "apiReference": {
-    "title": "API Reference ↗",
+    "title": <>API Reference <ExternalLink style={iconStyle} /></>,
     "type": "page",
     "href": "https://docs.rs/rig-core",
     "newWindow": true
   },
   "contact": {
-    "title": "Contact ↗",
+    "title": <>Contact <ExternalLink style={iconStyle} /></>,
     "type": "page",
     "href": "https://playgrounds.network",
     "newWindow": true
