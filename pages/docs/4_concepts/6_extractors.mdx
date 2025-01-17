@@ -21,7 +21,7 @@ The Extractor combines:
 
 Reference:
 
-```rsust filename="rig-core/src/extractor.rs [55:59]"
+```rust filename="rig-core/src/extractor.rs [55:59]"
 /// Extractor for structured data from text
 pub struct Extractor<M: CompletionModel, T: JsonSchema + for<'a> Deserialize<'a> + Send + Sync> {
     agent: Agent<M>,

@@ -21,7 +21,7 @@ A basic tool requires implementing the `Tool` trait, which defines:
 
 1. A unique name identifier
 2. Input argument types
-3. Output types 
+3. Output types
 4. Error handling
 5. Tool definition (description and parameters)
 6. Execution logic
@@ -73,7 +73,7 @@ Tools can be made RAG-enabled by implementing the `ToolEmbedding` trait, which a
 
 Reference implementation:
 
-```28:77:rig-core/examples/rag_dynamic_tools.rs
+```rust
 struct Add;
 
 impl Tool for Add {
