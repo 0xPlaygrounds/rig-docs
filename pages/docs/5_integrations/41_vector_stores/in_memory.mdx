@@ -23,7 +23,7 @@ The in-memory vector store is Rig's default vector store implementation, include
 
 ### Core Components
 
-1. **Store Structure**:s
+1. **Store Structure**:
 
 The `InMemoryVectorStore` uses a simple but effective data structure:
 
@@ -50,9 +50,9 @@ pub enum OneOrMany<T> {
 When searching, the store:
 
 1. Computes cosine similarity between the query and all document embeddings
-2. For documents with multiple embeddings, uses the best-matching embedding  
-3. Uses a `BinaryHeap` to efficiently maintain the top-N results  
-4. Returns results sorted by similarity score  
+2. For documents with multiple embeddings, uses the best-matching embedding
+3. Uses a `BinaryHeap` to efficiently maintain the top-N results
+4. Returns results sorted by similarity score
 
 Memory layout example:
 ```plaintext
@@ -133,25 +133,25 @@ use rig::vector_store::in_memory_store::InMemoryVectorStore;
 async fn main() -> Result<(), anyhow::Error> {
     // Initialize store
     let mut store = InMemoryVectorStore::default();
-    
+
     // Create embeddings
     let embeddings = EmbeddingsBuilder::new(model)
         .simple_document("doc1", "First document content")
         .simple_document("doc2", "Second document content")
         .build()
         .await?;
-    
+
     // Add documents to store
     store.add_documents(embeddings);
 
     // Create vector store index
     let index = store.index(model);
-    
+
     // Search similar documents
     let results = store
         .top_n::<Document>("search query", 5)
         .await?;
-    
+
     Ok(())
 }
 ```

@@ -30,7 +30,7 @@ cli_chatbot(agent).await?;
 ## Implementation
 Reference:
 
-```7:50:rig-core/src/cli_chatbot.rs
+```rust filename="rig-core/src/cli_chatbot.rs [7:50]"
 pub async fn cli_chatbot(chatbot: impl Chat) -> Result<(), PromptError> {
     let stdin = io::stdin();
     let mut stdout = io::stdout();

@@ -1,0 +1,103 @@
+---
+title: Qdrant
+---
+
+import { Cards } from 'nextra/components'
+
+# Rig-Qdrant Integration
+
+The `rig-qdrant` crate provides a vector store implementation using Qdrant as the underlying datastore. Qdrant is a highly performant vector search database built in Rust.
+
+## Key Features
+- **Integration with OpenAI**: Utilizes OpenAI's embedding models to generate vector representations of data.
+- **Flexible Querying**: Offers methods to perform top-N searches and retrieve node IDs based on vector similarity.
+
+## Usage
+
+### Setup
+
+Add the `rig-qdrant` crate to your `Cargo.toml`:
+
+```toml
+[dependencies]
+rig-qdrant = "0.1.5"
+```
+
+### Example Workflow
+
+1. **Connect to Qdrant**: Establish a connection using the `Qdrant` struct.
+
+```rust
+let qdrant_client = Qdrant::connect("http://localhost:6334").await?;
+```
+
+2. **Create Collection**: Define and create a vector collection, then build your `QdrantVectorStore`.
+
+```rust
+if !qdrant_client.collection_exists(COLLECTION_NAME).await? {
+    qdrant_client.create_collection(
+        CreateCollectionBuilder::new(COLLECTION_NAME)
+            .vectors_config(VectorParamsBuilder::new(
+                COLLECTION_SIZE as u64,
+                qdrant_client::qdrant::Distance::Cosine)
+            ),
+        ).await?;
+}
+
+let query_params = QueryPointsBuilder::new(COLLECTION_NAME).with_payload(true);
+let vector_store = QdrantVectorStore::new(qdrant_inner, model.clone(), query_params.build());
+```
+
+3. **Perform Vector Search**: Query the vector index for similar nodes.
+
+```rust
+let results = vector_store.top_n::<Movie>("a historical movie on quebec", 5).await?;
+```
+
+### Example Code
+
+```rust
+const COLLECTION_NAME: &str = "MY_COLLECTION";
+const COLLECTION_SIZE: usize = 1536; // vector embedding size for the collection goes here
+
+#[tokio::main]
+async fn main() -> Result<(), anyhow::Error> {
+    let openai_api_key = env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY not set");
+    let openai_client = Client::new(&openai_api_key);
+    let model = openai_client.embedding_model(TEXT_EMBEDDING_ADA_002);
+
+    let qdrant_client = Qdrant::connect("http://localhost:6334").await?;
+
+    // Create a collection with 1536 dimensions if it doesn't exist
+    // Note: Make sure the dimensions match the size of the embeddings returned by the
+    // model you are using
+    if !qdrant_client.collection_exists(COLLECTION_NAME).await? {
+        qdrant_client.create_collection(
+            CreateCollectionBuilder::new(COLLECTION_NAME)
+                .vectors_config(VectorParamsBuilder::new(
+                    COLLECTION_SIZE as u64,
+                    qdrant_client::qdrant::Distance::Cosine)
+                ),
+            ).await?;
+    }
+
+    let query_params = QueryPointsBuilder::new(COLLECTION_NAME).with_payload(true);
+    let vector_store = QdrantVectorStore::new(qdrant_inner, model.clone(), query_params.build());
+
+
+    let results = vector_store.top_n::<Utterance>(query, 1).await?;
+    println!("{:#?}", results);
+
+    Ok(())
+}
+```
+
+## Additional Resources
+
+- **Examples**: See the [examples](https://github.com/0xPlaygrounds/rig/tree/main/rig-qdrant/examples) directory for detailed usage scenarios.
+- **Qdrant Documentation**: Refer to the [Qdrant documentation](https://qdrant.tech/documentation/concepts/collections/) for more information on setting up and using collections.
+
+<br/>
+<Cards>
+<Cards.Card title="API Reference (docs.rs)" href="https://docs.rs/rig-qdrant/latest/rig-qdrant/index.html"/>
+</Cards>

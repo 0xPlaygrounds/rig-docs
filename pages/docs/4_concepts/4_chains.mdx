@@ -33,7 +33,7 @@ The Pipeline module provides a flexible API for building AI-powered processing p
 
 Operations are the building blocks of pipelines. Each operation:
 - Takes an input
-- Performs processing 
+- Performs processing
 - Returns an output
 - Implements the `Op` trait
 
@@ -84,7 +84,7 @@ let result = pipeline.call((5, 3)).await;
 assert_eq!(result, "16");
 ```
 
-### Parallel Operations 
+### Parallel Operations
 
 Execute multiple operations concurrently using the `parallel!` macro:
 
@@ -123,7 +123,7 @@ let pipeline = pipeline::new()
     ))
     // Format context
     .map(|(query, docs)| format!(
-        "Query: {}\nContext: {}", 
+        "Query: {}\nContext: {}",
         query,
         docs.join("\n")
     ))
@@ -153,11 +153,7 @@ let pipeline = pipeline::new()
 
 The module provides the `TryOp` trait for operations that may fail:
 
-
-```36:52:rig-core/src/pipeline/try_op.rs
-    /// let result = op.try_batch_call(2, vec![2, 4]).await;
-    /// assert_eq!(result, Ok(vec![3, 5]));
-    /// ```
+```rust filename="rig-core/src/pipeline/try_op.rs [36:52]"
     fn try_batch_call<I>(
         &self,
         n: usize,
@@ -169,9 +165,17 @@ The module provides the `TryOp` trait for operations that may fail:
         Self: Sized,
     {
         use stream::{StreamExt, TryStreamExt};
-        
+
         async move {
             stream::iter(input)
+            // ... more code here
+```
+
+Example usage can be found below:
+
+```rust
+let result = op.try_batch_call(2, vec![2, 4]).await;
+assert_eq!(result, Ok(vec![3, 5]));
 ```
 
 
