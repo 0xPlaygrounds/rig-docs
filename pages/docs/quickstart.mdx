@@ -2,182 +2,126 @@
 title: Quickstart
 description: This section contains the quickstart guide for Rig.
 ---
+## Pre-requisites
+Before installing `rig`, make sure you have the Rust programming language installed! [Install Rust here.](https://www.rust-lang.org/tools/install)
 
-In the rapidly evolving landscape of artificial intelligence (AI), Large Language Models (LLMs) have emerged as powerful tools for building sophisticated AI applications. However, harnessing the full potential of LLMs often requires navigating complex APIs, managing different providers, and implementing intricate workflows. This is where Rig comes in – a comprehensive Rust library designed to transform how developers build LLM-powered applications.
+## Installing rig
+To install rig, you can run it with the following command:
 
-## The Challenge of Building LLM Applications
+```bash
+cargo add rig-core tokio
+```
 
-Before diving into Rig's capabilities, let's consider the challenges developers face when building LLM applications:
+This will add the `rig-core` dependency in your Rust project, as well as Tokio which is an asynchronous Rust runtime which you will need to use `rig`.
 
-1. **API Complexity**: Each LLM provider has its own API, requiring developers to learn and manage multiple interfaces.
-2. **Workflow Management**: Implementing advanced AI workflows, such as Retrieval-Augmented Generation (RAG), involves multiple steps and can be error-prone.
-3. **Performance and Scalability**: Ensuring optimal performance and scalability in LLM applications can be challenging, especially as projects grow in complexity.
-4. **Type Safety and Error Handling**: Maintaining type safety and robust error handling across different LLM interactions is crucial but often difficult.
+## Using Rig
 
-## Enter Rig: A Game-Changer for LLM Application Development
-
-Rig is more than just an API wrapper; it's a comprehensive framework that addresses these challenges head-on. By providing high-level abstractions and a unified interface, Rig simplifies the development process, allowing you to focus on building innovative AI solutions rather than wrestling with implementation details.
-
-Whether you're a seasoned Rust developer or new to the language, Rig offers a range of features designed to make your LLM application development smoother, faster, and more enjoyable.
-
-## Getting Started with Rig
-
-Let's dive into a simple example to demonstrate how easy it is to get started with Rig:
+### Basic usage
+Below is a simple example of how you can use Rig to prompt OpenAI's GPT-4 model:
 
 ```rust
 use rig::{completion::Prompt, providers::openai};
 
 #[tokio::main]
-async fn main() -> Result<(), anyhow::Error> {
-    // Initialize the OpenAI client using environment variables
+async fn main() {
+    // Create OpenAI client and model
+    // This requires the `OPENAI_API_KEY` environment variable to be set.
     let openai_client = openai::Client::from_env();
-    
-    // Create a GPT-4 model instance
-    let gpt4 = openai_client.model("gpt-4").build();
-    
-    // Send a prompt to GPT-4 and await the response
-    let response = gpt4.prompt("Explain quantum computing in one sentence.").await?;
-    
-    // Print the response
-    println!("GPT-4: {}", response);
-    
-    Ok(())
+
+    let gpt4 = openai_client.agent("gpt-4").build();
+
+    // Prompt the model and print its response
+    let response = gpt4
+        .prompt("Who are you?")
+        .await
+        .expect("Failed to prompt GPT-4");
+
+    println!("GPT-4: {response}");
 }
 ```
 
-This simple example demonstrates how Rig abstracts away the complexities of interacting with OpenAI's API, allowing you to focus on the core logic of your application.
+To run this, you will need an OpenAI API key as an environment variable (`OPENAI_API_KEY`). Then simply use `cargo run` and you'll see your response!
 
-To include Rig in your project, add the following to your `Cargo.toml`:
+Interested in using other providers like DeepSeek or Claude? Check out [our list of providers that we support.](/docs/5_integrations/40_model_providers)
 
-```toml
-[dependencies]
-rig-core = "0.0.6"
-tokio = { version = "1.34.0", features = ["full"] }
-```
+### Embeddings
+Embeddings are pieces of data or information stored as float arrays. They are an essential part of Retrieval Augmented Generation (RAG) workflows, where semantic search is used to find semantically similar texts and return payloads associated with them. These payloads are then used as part of prompts.
 
-> 💡 **Tip**: Don't forget to set the `OPENAI_API_KEY` environment variable before running your application.
-
-## Key Features and Developer Experience
-
-Rig combines Rust's powerful type system and performance with intuitive abstractions tailored for AI development. Let's explore some of its key features:
-
-### 1. Unified and Intuitive API
-
-One of Rig's standout features is its consistent interface across different LLM providers:
+Below is an example of how you can use `rig` to embed some simple documents.
 
 ```rust
-// Using OpenAI
-let gpt4 = openai_client.model("gpt-4").build();
-let response = gpt4.prompt("Hello, GPT-4!").await?;
+use rig::{embeddings::EmbeddingsBuilder, providers::openai};
 
-// Using Cohere
-let command = cohere_client.model("command").build();
-let response = command.prompt("Hello, Cohere!").await?;
+// Create OpenAI client and model
+// This requires the `OPENAI_API_KEY` environment variable to be set.
+let openai_client = openai::Client::from_env();
+
+// Create embedding model
+let model = openai_client.embedding_model("text-embedding-ada-002");
+
+// Build embeddings
+let embeddings = EmbeddingsBuilder::new(model)
+    .document("Some text")?
+    .document("More text")?
+    .build()
+    .await?;
 ```
 
-This unified API design ensures that switching between providers or adding new ones to your project is seamless, reducing cognitive load and improving code maintainability.
+This code snippet will return an array of embeddings, assuming the OpenAI API is called successfully.
 
-### 2. Advanced Abstractions for Complex Workflows
+Interested in learning more about how `rig` handles embeddings? Check out [our embeddings docs page!](https://docs.rig.rs/docs/4_concepts/1_embeddings)
 
-Rig shines when it comes to implementing complex AI workflows. For example, creating a Retrieval-Augmented Generation (RAG) system typically involves multiple steps:
+### Tool functions
+For inference APIs that support tools and function calling, we also additionally support tool calling.
 
-1. Generating embeddings for documents
-2. Storing these embeddings in a vector database
-3. Retrieving relevant context based on user queries
-4. Augmenting the LLM prompt with this context
-
-With Rig, this entire process can be condensed into a few lines of code:
+You can also create your own custom tools. Below is an example of how to create your own tool:
 
 ```rust
-let rag_agent = openai_client.context_rag_agent("gpt-4")
-    .preamble("You are a helpful assistant.")
-    .dynamic_context(2, vector_store.index(embedding_model))
-    .build();
-
-let response = rag_agent.prompt("What is the capital of France?").await?;
-```
-
-This high-level abstraction allows developers to implement advanced AI systems quickly and efficiently, without getting bogged down in the implementation details.
-
-### 3. Type-Safe Development
-
-Leveraging Rust's strong type system, Rig provides compile-time guarantees and better auto-completion, enhancing the developer experience:
-
-```rust
-#[derive(serde::Deserialize, JsonSchema)]
-struct Person {
-    name: String,
-    age: u8,
+#[derive(Deserialize)]
+struct AddArgs {
+    x: i32,
+    y: i32,
 }
 
-let extractor = openai_client.extractor::<Person>("gpt-4").build();
-let person: Person = extractor.extract("John Doe is 30 years old").await?;
+#[derive(Deserialize, Serialize)]
+struct Adder;
+
+impl Tool for Adder {
+    const NAME: &'static str = "add";
+    type Error = MathError;
+    type Args = AddArgs;
+    type Output = i32;
+
+    async fn definition(&self, _prompt: String) -> ToolDefinition {
+        ToolDefinition {
+            name: "add".to_string(),
+            description: "Add x and y together".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "x": { "type": "number", "description": "First number" },
+                    "y": { "type": "number", "description": "Second number" }
+                }
+            })
+        }
+    }
+
+    async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
+        Ok(args.x + args.y)
+    }
+}
 ```
 
-This type-safe approach helps catch errors early in the development process and makes refactoring and maintenance easier.
-
-### 4. Extensibility and Integration
-
-Rig's flexible architecture allows for easy customization and seamless integration with Rust's growing AI ecosystem:
+Then you can call it with your agent during the builder method like so:
 
 ```rust
-impl VectorStore for MyCustomStore {
-    // Implementation details...
-}
-
-let my_store = MyCustomStore::new();
-let rag_agent = openai_client.context_rag_agent("gpt-4")
-    .dynamic_context(2, my_store.index(embedding_model))
+// Create agent with a single context prompt and two tools
+let calculator_agent = openai_client
+    .agent(providers::openai::GPT_4O)
+    .preamble("You are a calculator here to help the user perform arithmetic operations. Use the tools provided to answer the user's question.")
+    .max_tokens(1024)
+    .tool(Adder)
     .build();
 ```
 
-This extensibility ensures that Rig can grow with your project's needs and integrate with other tools in your AI development stack.
-
-## Advanced Features: RAG Systems and Beyond
-
-Let's explore a more comprehensive example of a RAG system with Rig, showcasing its ability to handle complex AI workflows:
-
-```rust
-use rig::{
-    completion::Prompt,
-    embeddings::EmbeddingsBuilder,
-    providers::openai::Client,
-    vector_store::{in_memory_store::InMemoryVectorStore, VectorStore},
-};
-
-#[tokio::main]
-async fn main() -> Result<(), anyhow::Error> {
-    // Initialize OpenAI client and embedding model
-    let openai_client = Client::from_env();
-    let embedding_model = openai_client.embedding_model("text-embedding-ada-002");
-
-    // Create and populate vector store
-    let mut vector_store = InMemoryVectorStore::default();
-    let embeddings = EmbeddingsBuilder::new(embedding_model.clone())
-        .simple_document("doc1", "Rig is a Rust library for building LLM applications.")
-        .simple_document("doc2", "Rig supports OpenAI and Cohere as LLM providers.")
-        .build()
-        .await?;
-    vector_store.add_documents(embeddings).await?;
-
-    // Create and use RAG agent
-    let rag_agent = openai_client.context_rag_agent("gpt-4")
-        .preamble("You are an assistant that answers questions about Rig.")
-        .dynamic_context(1, vector_store.index(embedding_model))
-        .build();
-
-    let response = rag_agent.prompt("What is Rig?").await?;
-    println!("RAG Agent: {}", response);
-
-    Ok(())
-}
-```
-
-This example demonstrates how Rig abstracts the complexity of creating a RAG system, handling embedding generation, vector storage, and context retrieval efficiently. With just a few lines of code, you've implemented a sophisticated AI system that can provide context-aware responses.
-
-But Rig's capabilities extend beyond RAG systems. Its flexible architecture allows for the implementation of various AI workflows, including:
-
-- Multi-agent systems for complex problem-solving
-- AI-powered data analysis and extraction
-- Automated content generation and summarization
-- And much more!
+Interested in learning more about how `rig` handles tools? Check out [our tools docs page!](https://docs.rig.rs/docs/4_concepts/2_tools)
