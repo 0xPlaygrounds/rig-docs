@@ -1,0 +1,42 @@
+---
+title: Embeddings
+description: This section contains the quickstart guide for Rig.
+---
+## Pre-requisites
+Before installing `rig`, make sure you have the Rust programming language installed! [Install Rust here.](https://www.rust-lang.org/tools/install)
+
+## Installing Rig
+To install `rig`, you can do so with the following command in a Rust project (in your terminal):
+
+```bash
+cargo add rig-core tokio
+```
+
+This will add the `rig-core` dependency in your Rust project, as well as Tokio which is an asynchronous Rust runtime which you will need to use `rig`.
+
+## Embeddings with Rig
+Embeddings are pieces of data or information stored as float arrays. They are an essential part of Retrieval Augmented Generation (RAG) workflows, where semantic search is used to find semantically similar texts and return payloads associated with them. These payloads are then used as part of prompts.
+
+Below is an example of how you can use `rig` to embed some simple documents.
+
+```rust
+use rig::{embeddings::EmbeddingsBuilder, providers::openai};
+
+// Create OpenAI client and model
+// This requires the `OPENAI_API_KEY` environment variable to be set.
+let openai_client = openai::Client::from_env();
+
+// Create embedding model
+let model = openai_client.embedding_model("text-embedding-ada-002");
+
+// Build embeddings
+let embeddings = EmbeddingsBuilder::new(model)
+    .document("Some text")?
+    .document("More text")?
+    .build()
+    .await?;
+```
+
+This code snippet will return an array of embeddings, assuming the OpenAI API is called successfully.
+
+Interested in learning more about how `rig` handles embeddings? Check out [our embeddings docs page!](https://docs.rig.rs/docs/4_concepts/1_embeddings)
