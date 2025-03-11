@@ -21,13 +21,13 @@
   "homepage": "https://github.com/shuding/nextra-docs-template#readme",
   "dependencies": {
     "@swc/helpers": "^0.5.15",
-    "@types/react": "^18.3.12",
-    "autoprefixer": "^10.4.20",
+    "@types/react": "^18.3.18",
+    "autoprefixer": "^10.4.21",
     "lucide-react": "^0.460.0",
-    "next": "^15.0.3",
-    "nextra": "^3.2.4",
-    "nextra-theme-docs": "^3.2.4",
-    "postcss": "^8.4.49",
+    "next": "^15.2.1",
+    "nextra": "^3.3.1",
+    "nextra-theme-docs": "^3.3.1",
+    "postcss": "^8.5.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sharp": "^0.33.5"
@@ -35,7 +35,7 @@
   "devDependencies": {
     "@types/mdx": "^2.0.13",
     "@types/node": "18.11.10",
-    "tailwindcss": "^3.4.15",
+    "tailwindcss": "^3.4.17",
     "typescript": "^4.9.5"
   }
 }
