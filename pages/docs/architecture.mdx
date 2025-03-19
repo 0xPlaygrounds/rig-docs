@@ -6,7 +6,6 @@ description: This section contains the architecture of Rig.
 import { FileTree } from 'nextra/components'
 
 # Architecture
-
 <FileTree>
     <FileTree.Folder name="rig-core" defaultOpen>
         <FileTree.Folder name="loaders" defaultOpen>
@@ -34,6 +33,7 @@ import { FileTree } from 'nextra/components'
     </FileTree.Folder>
     <FileTree.Folder name="..." />
 </FileTree>
+
 ## Core concepts
 
 ### Completion and embedding models
@@ -58,3 +58,6 @@ provides the [VectorStore](crate::vector_store::VectorStore) and [VectorStoreInd
 traits, which can be implemented on a given type to define vector stores and indices respectively.
 Those can then be used as the knowledge base for a RAG enabled [Agent](crate::agent::Agent), or
 as a source of context documents in a custom architecture that use multiple LLMs or agents.
+
+## The architecture of the Rig framework, in one picture
+<img src="/images/rig_architecture.jpg" alt="The architecture of the Rig ecosystem" />
