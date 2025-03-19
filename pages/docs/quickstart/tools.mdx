@@ -1,0 +1,70 @@
+---
+title: Tools & Function Calls
+description: This section contains the quickstart guide for Rig.
+---
+## Pre-requisites
+Before installing `rig`, make sure you have the Rust programming language installed! [Install Rust here.](https://www.rust-lang.org/tools/install)
+
+## Installing Rig
+To install `rig`, you can do so with the following command in a Rust project (in your terminal):
+
+```bash
+cargo add rig-core tokio
+```
+
+This will add the `rig-core` dependency in your Rust project, as well as Tokio which is an asynchronous Rust runtime which you will need to use `rig`.
+
+## Tool functions with Rig
+For inference APIs that support tools and function calling, `rig` also additionally supports tool calling.
+
+You can also create your own custom tools. Below is an example of how to create your own tool:
+
+```rust
+#[derive(Deserialize)]
+struct AddArgs {
+    x: i32,
+    y: i32,
+}
+
+#[derive(Deserialize, Serialize)]
+struct Adder;
+
+impl Tool for Adder {
+    const NAME: &'static str = "add";
+    type Error = MathError;
+    type Args = AddArgs;
+    type Output = i32;
+
+    async fn definition(&self, _prompt: String) -> ToolDefinition {
+        ToolDefinition {
+            name: "add".to_string(),
+            description: "Add x and y together".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "x": { "type": "number", "description": "First number" },
+                    "y": { "type": "number", "description": "Second number" }
+                }
+            })
+        }
+    }
+
+    async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
+        Ok(args.x + args.y)
+    }
+}
+```
+
+Then you can call it with your agent during the builder method like so:
+
+```rust
+// Create agent with a single context prompt and two tools
+let calculator_agent = openai_client
+    .agent(providers::openai::GPT_4O)
+    .preamble("You are a calculator here to help the user perform arithmetic operations. Use the tools provided to answer the user's question.")
+    .max_tokens(1024)
+    .tool(Adder)
+    .build();
+```
+
+Interested in learning more about how `rig` handles tools? Check out [our tools docs page!](https://docs.rig.rs/docs/4_concepts/2_tools)
