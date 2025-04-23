@@ -1,13 +1,10 @@
 import {
   Blocks,
   Lightbulb,
-  CircleHelp,
-  DraftingCompass,
   Landmark,
   Puzzle,
   Rocket,
   Unplug,
-  MessageCircleQuestion,
   HeartHandshake,
 } from "lucide-react";
 

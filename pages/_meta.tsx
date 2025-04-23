@@ -3,7 +3,6 @@ import {
   BookText,
   PocketKnife,
   CookingPot,
-  SquareArrowOutUpRight,
   ExternalLink,
 } from "lucide-react";
 
