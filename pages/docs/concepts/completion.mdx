@@ -3,7 +3,7 @@ title: Completion & Generation
 description: This section contains the concepts for Rig.
 ---
 
-import { Cards } from 'nextra/components'
+import { Cards } from "nextra/components";
 
 # Completion in Rig: LLM Interaction Layer
 
@@ -14,6 +14,7 @@ Rig's completion system provides a layered approach to interacting with Language
 ### 1. High-Level Interfaces
 
 #### `Prompt` Trait
+
 - Simplest interface for one-shot interactions
 - Fire-and-forget prompting
 - Returns string responses
@@ -23,6 +24,7 @@ async fn prompt(&self, prompt: &str) -> Result<String, PromptError>;
 ```
 
 #### `Chat` Trait
+
 - Conversation-aware interactions
 - Maintains chat history
 - Supports contextual responses
@@ -34,6 +36,7 @@ async fn chat(&self, prompt: &str, history: Vec<Message>) -> Result<String, Prom
 ### 2. Low-Level Control
 
 #### `Completion` Trait
+
 - Fine-grained request configuration
 - Access to raw completion responses
 - Tool call handling
@@ -107,8 +110,8 @@ pub trait CompletionModel: Clone + Send + Sync {
 }
 ```
 
-
 #### `CompletionModel` Trait
+
 - Provider interface implementation
 - Raw request handling
 - Response parsing and error management
@@ -116,6 +119,7 @@ pub trait CompletionModel: Clone + Send + Sync {
 ## Request Building
 
 ### CompletionRequestBuilder
+
 Fluent API for constructing requests with:
 
 ```rust
@@ -131,6 +135,7 @@ let request = model.completion_request("prompt")
 ### Request Components
 
 1. **Core Elements**
+
    - Prompt text
    - System preamble
    - Chat history
@@ -138,6 +143,7 @@ let request = model.completion_request("prompt")
    - Max tokens
 
 2. **Context Management**
+
    - Document attachments
    - Metadata handling
    - Formatting controls
@@ -150,6 +156,7 @@ let request = model.completion_request("prompt")
 ## Response Handling
 
 ### CompletionResponse
+
 Structured response type with:
 
 ```rust
@@ -167,6 +174,7 @@ struct CompletionResponse<T> {
 ### Error Handling
 
 Comprehensive error types:
+
 ```rust
 enum CompletionError {
     HttpError(reqwest::Error),
@@ -221,9 +229,9 @@ let request = model
 ```rust
 impl CompletionModel for CustomProvider {
     type Response = CustomResponse;
-    
+
     async fn completion(
-        &self, 
+        &self,
         request: CompletionRequest
     ) -> Result<CompletionResponse<Self::Response>, CompletionError> {
         // Provider-specific implementation
@@ -234,11 +242,13 @@ impl CompletionModel for CustomProvider {
 ## Best Practices
 
 1. **Interface Selection**
+
    - Use `Prompt` for simple interactions
    - Use `Chat` for conversational flows
    - Use `Completion` for fine-grained control
 
 2. **Error Handling**
+
    - Handle provider-specific errors
    - Implement graceful fallbacks
    - Log raw responses for debugging
@@ -256,7 +266,7 @@ impl CompletionModel for CustomProvider {
 <br />
 
 <Cards.Card
-    title="API Reference (Completion)"
-    href="https://docs.rs/rig-core/latest/rig/completion/index.html"
-    arrow
+  title="API Reference (Completion)"
+  href="https://docs.rs/rig-core/latest/rig/completion/index.html"
+  arrow
 />

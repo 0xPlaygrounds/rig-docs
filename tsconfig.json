@@ -18,7 +18,12 @@
       "react": ["./node_modules/@types/react"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "tailwind.config.js", "pages/examples/index.mdx"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "tailwind.config.js",
+    "pages/examples/index.mdx"
+  ],
   "exclude": ["node_modules"]
-
 }

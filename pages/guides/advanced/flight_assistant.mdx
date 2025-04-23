@@ -8,7 +8,7 @@
 
 Ever chatted with AI assistants like Siri, Alexa, or even those nifty chatbots that help you book flights or check the weather? Ever wondered what's happening under the hood? Today, we're going to demystify that by building our very own Flight Search AI Assistant using **[Rust](https://www.rust-lang.org/)** and the **[Rig](https://github.com/0xPlaygrounds/rig)** library.
 
-You might be thinking, *"Wait, Rust? Isn't that the language with the reputation for being hard?"* Don't worry! We'll walk through everything step by step, explaining concepts as we go. By the end, not only will you have a cool AI assistant, but you'll also have dipped your toes into Rust programming.
+You might be thinking, _"Wait, Rust? Isn't that the language with the reputation for being hard?"_ Don't worry! We'll walk through everything step by step, explaining concepts as we go. By the end, not only will you have a cool AI assistant, but you'll also have dipped your toes into Rust programming.
 
 Here's our game plan:
 
@@ -20,7 +20,7 @@ Here's our game plan:
 - **Running and Testing**: Seeing our creation in action.
 - **Wrapping Up**: Recap and next steps.
 
-> *Full source code for this project can be found on our [Replit Page](https://replit.com/@playgrounds/travelplanningagent) and [Github](https://github.com/0xPlaygrounds/awesome-rig/tree/main/travel_flights_planning_agent)*
+> _Full source code for this project can be found on our [Replit Page](https://replit.com/@playgrounds/travelplanningagent) and [Github](https://github.com/0xPlaygrounds/awesome-rig/tree/main/travel_flights_planning_agent)_
 
 Sound exciting? Let's dive in!
 
@@ -123,7 +123,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 RAPIDAPI_KEY=your_rapidapi_key_here
 ```
 
-*Remember to replace the placeholders with your actual keys.*
+_Remember to replace the placeholders with your actual keys._
 
 #### 4. Install Dependencies
 
@@ -222,7 +222,7 @@ pub struct FlightOption {
 - **`FlightSearchArgs`**: Represents the parameters the user provides.
 - **`FlightOption`**: Represents each flight option we'll display to the user.
 
-*Want to dive deeper? Check out [Rust's struct documentation](https://doc.rust-lang.org/book/ch05-01-defining-structs.html).*
+_Want to dive deeper? Check out [Rust's struct documentation](https://doc.rust-lang.org/book/ch05-01-defining-structs.html)._
 
 ### 4. Error Handling with `thiserror`
 
@@ -244,7 +244,7 @@ pub enum FlightSearchError {
 
 This makes it easier to manage different kinds of errors that might occur during the API call.
 
-*Learn more about [error handling in Rust](https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html).*
+_Learn more about [error handling in Rust](https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html)._
 
 ### 5. Implement the `Tool` Trait
 
@@ -292,7 +292,7 @@ impl Tool for FlightSearchTool {
 - **`definition`**: Provides metadata about the tool.
 - **`call`**: The function that will be executed when the agent uses this tool.
 
-*Curious about traits? Explore [Rust's trait system](https://doc.rust-lang.org/book/ch10-02-traits.html).*
+_Curious about traits? Explore [Rust's trait system](https://doc.rust-lang.org/book/ch10-02-traits.html)._
 
 ### 6. Implement the `call` Function
 
@@ -375,9 +375,9 @@ for (i, option) in flight_options.iter().enumerate() {
 Ok(output)
 ```
 
-*Note: A lot of this section involves parsing the raw API response. To keep things concise, the detailed extraction of flight options is intentionally omitted, but in your code, you'll parse the JSON to extract the necessary fields. See the [full code in the repository](https://replit.com/@playgrounds/travelplanningagent).*
+_Note: A lot of this section involves parsing the raw API response. To keep things concise, the detailed extraction of flight options is intentionally omitted, but in your code, you'll parse the JSON to extract the necessary fields. See the [full code in the repository](https://replit.com/@playgrounds/travelplanningagent)._
 
-*Interested in JSON parsing? Check out [serde_json documentation](https://docs.serde.rs/serde_json/).*
+_Interested in JSON parsing? Check out [serde_json documentation](https://docs.serde.rs/serde_json/)._
 
 ---
 
@@ -425,7 +425,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 - We prompt the agent with a query.
 - Finally, we print out the response.
 
-*Want to understand asynchronous functions? Learn about the `async` keyword and the `#[tokio::main]` macro [here](https://tokio.rs/tokio/tutorial/async).*
+_Want to understand asynchronous functions? Learn about the `async` keyword and the `#[tokio::main]` macro [here](https://tokio.rs/tokio/tutorial/async)._
 
 ---
 
@@ -476,7 +476,7 @@ Here are some flight options:
 ...
 ```
 
-*Note: The actual results may vary depending on the API response.*
+_Note: The actual results may vary depending on the API response._
 
 ---
 

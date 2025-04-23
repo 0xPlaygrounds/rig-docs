@@ -3,7 +3,7 @@ title: Anthropic
 description: Integration with Anthropic's Claude models, supporting completion models with advanced features like tool usage and prompt caching.
 ---
 
-import { Cards } from 'nextra/components'
+import { Cards } from "nextra/components";
 
 # Anthropic Integration
 
@@ -42,6 +42,7 @@ let agent = client
 ## Available Models
 
 ### Completion Models
+
 - `CLAUDE_3_OPUS`: Most capable model
 - `CLAUDE_3_SONNET`: Balanced performance and speed
 - `CLAUDE_3_HAIKU`: Fastest, most efficient model
@@ -58,9 +59,8 @@ pub const ANTHROPIC_VERSION_2023_06_01: &str = "2023-06-01";
 pub const ANTHROPIC_VERSION_LATEST: &str = ANTHROPIC_VERSION_2023_06_01;
 ```
 
-
 2. **Token Requirements**: Unlike other providers, Anthropic requires `max_tokens` to be set:
-    
+
 ```rust filename="rig-core/src/providers/anthropic/completion.rs [176:182]"
 
         let prompt_with_context = completion_request.prompt_with_context();
@@ -70,7 +70,6 @@ pub const ANTHROPIC_VERSION_LATEST: &str = ANTHROPIC_VERSION_2023_06_01;
             return Err(CompletionError::RequestError(
                 "max_tokens must be set for Anthropic".into(),
 ```
-
 
 3. **Response Format**: Anthropic responses include detailed token usage information including cache statistics:
 
@@ -83,7 +82,6 @@ pub const ANTHROPIC_VERSION_LATEST: &str = ANTHROPIC_VERSION_2023_06_01;
 
 impl std::fmt::Display for Usage {
 ```
-
 
 4. **Content Types**: Anthropic supports multiple content types in responses:
 
@@ -106,14 +104,13 @@ pub enum Content {
     },
 ```
 
-
 ## Implementation Details
 
 The Anthropic provider is implemented across three main components:
 
 1. **Client Builder**: Provides a flexible way to configure API settings:
 
-```rust filename="rig-core/src/providers/anthropic/client.rs [13:73]"
+````rust filename="rig-core/src/providers/anthropic/client.rs [13:73]"
 const ANTHROPIC_API_BASE_URL: &str = "https://api.anthropic.com";
 
 #[derive(Clone)]
@@ -140,8 +137,7 @@ impl<'a> ClientBuilder<'a> {
     pub fn new(api_key: &'a str) -> Self {
         Self {
             api_key,
-```
-
+````
 
 2. **Completion Model**: Handles request/response formatting and error handling:
 
@@ -154,7 +150,6 @@ pub struct CompletionModel {
 }
 ```
 
-
 3. **Tool Integration**: Supports function calling with specific Anthropic formatting:
 
 ```rust filename="rig-core/src/providers/anthropic/completion.rs [86:91]"
@@ -166,11 +161,13 @@ pub struct ToolDefinition {
     pub description: Option<String>,
 ```
 
-
 For detailed API reference and additional features, see the Anthropic API documentation and Rig's API documentation.
 
 <br />
 
 <Cards>
-<Cards.Card title="API Reference (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/anthropic/index.html"/>
+  <Cards.Card
+    title="API Reference (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/anthropic/index.html"
+  />
 </Cards>

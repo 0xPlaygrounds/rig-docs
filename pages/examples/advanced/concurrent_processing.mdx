@@ -19,12 +19,14 @@ You'll also need an OpenAI or Cohere API key. If you don't have one, you can sig
 ### Setup
 
 1. Create a new Rust project:
+
    ```
    cargo new rig-concurrent-processing
    cd rig-concurrent-processing
    ```
 
 2. Add the following dependencies to your `Cargo.toml`:
+
    ```toml
    [dependencies]
    rig-core = "0.1.0"
@@ -57,6 +59,7 @@ The main components of this example are:
 ### Customization
 
 You can easily modify this example to suit your specific use case:
+
 - Change the number of concurrent tasks by adjusting the loop range.
 - Modify the prompt to generate different types of content.
 - Experiment with different OpenAI models by changing the model name.
@@ -70,6 +73,7 @@ You can easily modify this example to suit your specific use case:
 ### Troubleshooting
 
 If you encounter any issues:
+
 - Ensure your OpenAI API key is correctly set.
 - Check that all dependencies are properly installed.
 - Verify that you're using a compatible Rust version.

@@ -2,14 +2,17 @@
 title: CLI Chatbot
 description: This section contains the concepts for Rig.
 ---
-import { Cards } from 'nextra/components'
+
+import { Cards } from "nextra/components";
 
 # CLI Chatbot Utility
 
 ## Overview
+
 A utility function that creates an interactive REPL-style chatbot from any type implementing the `Chat` trait. Manages chat history, I/O, and basic command handling.
 
 ## Usage
+
 ```rust
 use rig::{cli_chatbot, providers::openai};
 
@@ -21,6 +24,7 @@ cli_chatbot(agent).await?;
 ```
 
 ## Features
+
 - Interactive REPL interface with `> ` prompt
 - Maintains chat history for context
 - Simple "exit" command
@@ -28,6 +32,7 @@ cli_chatbot(agent).await?;
 - Tracing support for debugging
 
 ## Implementation
+
 Reference:
 
 ```rust filename="rig-core/src/cli_chatbot.rs [7:50]"
@@ -77,9 +82,10 @@ pub async fn cli_chatbot(chatbot: impl Chat) -> Result<(), PromptError> {
 }
 ```
 
-
 ## Chat History Management
+
 Automatically tracks conversation with `Message` objects:
+
 ```rust
 Message {
     role: "user"|"assistant",
@@ -88,6 +94,7 @@ Message {
 ```
 
 ## Examples
+
 Used in calculator chatbot:
 
 ```279:281:rig-core/examples/calculator_chatbot.rs
@@ -96,7 +103,6 @@ Used in calculator chatbot:
 
 ```
 
-
 And multi-agent systems:
 
 ```66:67:rig-core/examples/multi_agent.rs
@@ -104,8 +110,8 @@ And multi-agent systems:
     cli_chatbot(translator).await?;
 ```
 
-
 ## Error Handling
+
 - Returns `Result<(), PromptError>`
 - Handles I/O errors gracefully
 - Propagates chat implementation errors
@@ -114,9 +120,8 @@ And multi-agent systems:
 - [Agent System](../concepts/agent.mdx)
 - [Completion Models](../concepts/completion.mdx)
 
-
 <Cards.Card
-    title="API Reference (CLI Chatbot)"
-    href="https://docs.rs/rig-core/latest/rig/cli_chatbot/index.html"
-    arrow
+  title="API Reference (CLI Chatbot)"
+  href="https://docs.rs/rig-core/latest/rig/cli_chatbot/index.html"
+  arrow
 />

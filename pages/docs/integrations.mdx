@@ -15,7 +15,6 @@ Rig follows a modular integration strategy that separates core functionality int
 
 Model providers are built directly into `rig-core` under the `providers` module, as shown in:
 
-
 ```rust filename="rig-core/src/lib.rs:61-66"
 //! Rig natively supports the following completion and embedding model provider integrations:
 //! - OpenAI
@@ -26,8 +25,8 @@ Model providers are built directly into `rig-core` under the `providers` module,
 //! - xAI
 ```
 
-
 Each provider integration includes:
+
 - Client implementation with API handling
 - Model initialization helpers
 - Request/response type definitions
@@ -50,20 +49,19 @@ let agent = client.agent("gpt-4")
     .build();
 ```
 
-## Vector Store Integrations 
+## Vector Store Integrations
 
 Vector stores are maintained as companion crates to keep the core library lean. As described in [CONTRIBUTING.md](https://github.com/0xPlaygrounds/rig/blob/main/CONTRIBUTING.md):
-
 
 > Rig is split up into multiple crates in a monorepo structure. The main crate `rig-core` contains all of the foundational abstractions for building with LLMs. This crate avoids adding many new dependencies to keep to lean and only really contains simple provider integrations on top of the base layer of abstractions. Side crates are leveraged to help add important first-party behavior without over burdening the main library with dependencies. For example, `rig-mongodb` contains extra dependencies to be able to interact with `mongodb` as a vector store.
 >
 > If you are unsure whether a side-crate should live in the main repo, you can spin up a personal repo containing your crate and create an issue in our repo making the case on whether this side-crate should be integrated in the main repo and maintained by the Rig team.
 
-
 Current vector store integrations include:
 
 ```markdown filename="CONTRIBUTING.md:91-95"
 Vector stores are available as separate companion-crates:
+
 - MongoDB vector store: [`rig-mongodb`](https://github.com/0xPlaygrounds/rig/tree/main/rig-mongodb)
 - LanceDB vector store: [`rig-lancedb`](https://github.com/0xPlaygrounds/rig/tree/main/rig-lancedb)
 - Neo4j vector store: [`rig-neo4j`](https://github.com/0xPlaygrounds/rig/tree/main/rig-neo4j)
@@ -71,26 +69,30 @@ Vector stores are available as separate companion-crates:
 ```
 
 Each vector store companion crate:
+
 - Implements the `VectorStoreIndex` trait from `rig-core`
 - Manages its own dependencies
 - Provides store-specific configuration options
 - Contains dedicated examples and documentation
 
-import { Callout } from 'nextra/components'
- 
+import { Callout } from "nextra/components";
+
 <Callout type="info" emoji="ℹ️">
-  Note: In-memory vector store is included in `rig-core` as a default implementation.
-</Callout>
+  Note: In-memory vector store is included in `rig-core` as a default
+  implementation.
+</Callout>;
 
 ## Upcoming Plugin Integrations
 
 Rig is expanding to support platform-specific plugins for enhanced context retrieval and interactions:
 
 ### Social Media Plugins
+
 - **Twitter Plugin**: Retrieve tweet context, thread analysis, and user interactions
 - **Discord Plugin**: Access channel history, member interactions, and server analytics
 
 ### Features
+
 - Real-time data streaming
 - Context-aware responses
 - Platform-specific formatting
@@ -98,6 +100,7 @@ Rig is expanding to support platform-specific plugins for enhanced context retri
 - Authentication handling
 
 These plugins will enable:
+
 - Building context-aware chatbots
 - Social media monitoring and analysis
 - Automated engagement systems
@@ -106,7 +109,6 @@ These plugins will enable:
 ## Contributing New Integrations
 
 The project welcomes new integrations through pull requests. Templates are available:
-
 
 ```10:18:.github/ISSUE_TEMPLATE/vector-store-integration-request.md
 ## Vector Store Integration Request
@@ -120,8 +122,8 @@ Links to API docs, SDKs or any other information that would help in the integrat
 -->
 ```
 
-
 When contributing:
+
 1. For model providers: Add implementation under `rig-core/src/providers/`
 2. For vector stores: Create a new companion crate following existing patterns
 3. For plugins: Use the plugin template and implement required interfaces

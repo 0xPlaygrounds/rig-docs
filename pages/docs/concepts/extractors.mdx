@@ -3,7 +3,7 @@ title: Extractors
 description: This section contains the concepts for Rig.
 ---
 
-import { Cards } from 'nextra/components'
+import { Cards } from "nextra/components";
 
 # Rig Extractors: Structured Data Extraction
 
@@ -14,6 +14,7 @@ The Extractor system in Rig provides a high-level abstraction for extracting str
 ### Extractor Structure
 
 The Extractor combines:
+
 1. An LLM Agent
 2. A target data structure
 3. A submission tool
@@ -29,10 +30,10 @@ pub struct Extractor<M: CompletionModel, T: JsonSchema + for<'a> Deserialize<'a>
 }
 ```
 
-
 ### Target Data Requirements
 
 Structures must implement:
+
 - `serde::Deserialize`
 - `serde::Serialize`
 - `schemars::JsonSchema`
@@ -63,7 +64,6 @@ let person = extractor.extract("John Doe is a 30 year old doctor.").await?;
 
 The system provides comprehensive error handling through `ExtractionError`:
 
-
 ```rust filename="rig-core/src/extractor.rs [43:53]"
 #[derive(Debug, thiserror::Error)]
 pub enum ExtractionError {
@@ -78,7 +78,6 @@ pub enum ExtractionError {
 }
 ```
 
-
 ## Key Features
 
 ### 1. Type Safety
@@ -90,6 +89,7 @@ pub enum ExtractionError {
 ### 2. Flexible Extraction
 
 The extractor can be customized with:
+
 - Additional context
 - Custom preamble
 - Model configuration
@@ -104,7 +104,6 @@ let extractor = openai.extractor::<Person>(model)
 ### 3. Submit Tool Integration
 
 The system uses a specialized tool for data submission:
-
 
 ```rust filename="rig-core/src/extractor.rs [134:152]"
 impl<T: JsonSchema + for<'a> Deserialize<'a> + Serialize + Send + Sync> Tool for SubmitTool<T> {
@@ -128,15 +127,16 @@ impl<T: JsonSchema + for<'a> Deserialize<'a> + Serialize + Send + Sync> Tool for
 }
 ```
 
-
 ## Best Practices
 
 1. **Structure Design**
+
    - Use `Option<T>` for optional fields
    - Keep structures focused and minimal
    - Document field requirements
 
 2. **Error Handling**
+
    - Handle both extraction and deserialization errors
    - Provide fallback values where appropriate
    - Log extraction failures for debugging
@@ -205,15 +205,15 @@ let agent = client.agent(model)
 ```
 
 ## See Also
+
 - [Agent System](./agent.md)
 - [Completion Models](./completion.md)
 - [Tool System](./tool.md)
 
-
 <br />
 
 <Cards.Card
-    title="API Reference (Loaders)"
-    href="https://docs.rs/rig-core/latest/rig/loaders/index.html"
-    arrow
+  title="API Reference (Loaders)"
+  href="https://docs.rs/rig-core/latest/rig/loaders/index.html"
+  arrow
 />
