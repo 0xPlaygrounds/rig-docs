@@ -102,7 +102,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rig-core = "0.0.6"
+rig-core = "0.11.1"
 tokio = { version = "1.34.0", features = ["full"] }
 anyhow = "1.0.75"
 serde = { version = "1.0", features = ["derive"] }
@@ -168,18 +168,19 @@ Let's implement a simple sentiment analysis classifier using Rig. We'll create a
 
 ```rust
 use serde::{Deserialize, Serialize};
+use schemars::JsonSchema;
 use rig::providers::openai;
 use rig::extractor::Extractor;
 use anyhow::Result;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
 enum Sentiment {
     Positive,
     Negative,
     Neutral,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
 struct SentimentClassification {
     sentiment: Sentiment,
     confidence: f32,
@@ -192,8 +193,8 @@ struct SentimentClassification {
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok(); // Load environment variables securely
-    let openai_client = openai::Client::from_env()?;
-    
+    let openai_client = openai::Client::from_env();
+
     let sentiment_classifier = openai_client
         .extractor::<SentimentClassification>("gpt-3.5-turbo")
         .preamble("You are a sentiment analysis AI. Classify the sentiment of the given text.")
@@ -269,7 +270,7 @@ struct ExtractedEntities {
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     let openai_client = openai::Client::from_env()?;
-    
+
     let ner_extractor = openai_client
         .extractor::<ExtractedEntities>("gpt-3.5-turbo")
         .preamble("
@@ -318,7 +319,7 @@ struct TextAnalysis {
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     let openai_client = openai::Client::from_env()?;
-    
+
     let text_analyzer = openai_client
         .extractor::<TextAnalysis>("gpt-3.5-turbo")
         .preamble("
@@ -399,7 +400,7 @@ struct NewsArticleAnalysis {
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     let openai_client = openai::Client::from_env()?;
-    
+
     let news_analyzer = openai_client
         .extractor::<NewsArticleAnalysis>("gpt-4")
         .preamble("
@@ -412,7 +413,7 @@ async fn main() -> Result<()> {
         .build();
 
     let article = "/* Article text here */";
-    
+
     let result = news_analyzer.extract(article).await?;
 
     println!("Article Analysis:");
