@@ -2,8 +2,8 @@
 title: Pipeline (Agentic Chain)
 description: This section contains the concepts for Rig.
 ---
-import { FileTree, Cards } from 'nextra/components'
 
+import { FileTree, Cards } from "nextra/components";
 
 # Pipeline Module
 
@@ -24,14 +24,15 @@ The Pipeline module provides a flexible API for building AI-powered processing p
 >
 > One can think of a pipeline as a DAG (Directed Acyclic Graph) where each node is an operation and
 > the edges represent the data flow between operations. When invoking the pipeline on some input,
-<FileTree.File name="rig-core/src/pipeline/mod.rs [1-13]"/>
 
+<FileTree.File name="rig-core/src/pipeline/mod.rs [1-13]" />
 
 ## Core Concepts
 
 ### Operations (Ops)
 
 Operations are the building blocks of pipelines. Each operation:
+
 - Takes an input
 - Performs processing
 - Returns an output
@@ -52,12 +53,14 @@ let async_op = pipeline::new()
 ### Pipeline Structure
 
 Pipelines form a Directed Acyclic Graph (DAG) where:
+
 - Nodes represent operations
 - Edges represent data flow between operations
 - Input flows from root to leaf nodes
 - Output is returned from the final node
 
 Example DAG visualization:
+
 ```mermaid
 graph TD
     A[Input] --> B[Operation 1]
@@ -88,7 +91,6 @@ assert_eq!(result, "16");
 
 Execute multiple operations concurrently using the `parallel!` macro:
 
-
 ```rust filename="rig-core/src/pipeline/parallel.rs [196:208]"
             ]
             values_and_positions: [
@@ -104,7 +106,6 @@ Execute multiple operations concurrently using the `parallel!` macro:
         // Accumulate a token for each future that has been expanded: "_ _ _".
         current_position: [
 ```
-
 
 ## AI-Specific Operations
 
@@ -178,7 +179,6 @@ let result = op.try_batch_call(2, vec![2, 4]).await;
 assert_eq!(result, Ok(vec![3, 5]));
 ```
 
-
 ## Advanced Features
 
 ### Custom Operations
@@ -229,7 +229,7 @@ let results = pipeline.batch_call(5, documents).await;
 <br />
 
 <Cards.Card
-    title="API Reference (Pipeline)"
-    href="https://docs.rs/rig-core/latest/rig/pipeline/index.html"
-    arrow
+  title="API Reference (Pipeline)"
+  href="https://docs.rs/rig-core/latest/rig/pipeline/index.html"
+  arrow
 />

@@ -3,7 +3,7 @@ title: OpenAI
 description: Integration with OpenAI's API services, supporting both completion and embedding models.
 ---
 
-import { Cards } from 'nextra/components'
+import { Cards } from "nextra/components";
 
 # OpenAI Integration
 
@@ -38,11 +38,13 @@ let embedder = client.embedding_model(openai::TEXT_EMBEDDING_3_LARGE);
 ## Available Models
 
 ### Completion Models
+
 - `GPT_4` / `GPT_4O`: GPT-4 base and optimized versions
 - `GPT_35_TURBO`: GPT-3.5 Turbo and its variants
 - `GPT_35_TURBO_INSTRUCT`: Instruction-tuned GPT-3.5
 
 ### Embedding Models
+
 - `TEXT_EMBEDDING_3_LARGE`: 3072 dimensions
 - `TEXT_EMBEDDING_3_SMALL`: 1536 dimensions
 - `TEXT_EMBEDDING_ADA_002`: 1536 dimensions (legacy)
@@ -52,6 +54,7 @@ let embedder = client.embedding_model(openai::TEXT_EMBEDDING_3_LARGE);
 1. **Tool Calling**: OpenAI models support function calling through a specialized JSON format. The provider automatically handles conversion between Rig's tool definitions and OpenAI's expected format.
 
 2. **Response Processing**: The provider implements special handling for:
+
    - Tool/function call responses
    - System messages
    - Token usage tracking
@@ -62,7 +65,7 @@ let embedder = client.embedding_model(openai::TEXT_EMBEDDING_3_LARGE);
 
 The core OpenAI provider implementation can be found in:
 
-```rust filename="rig-core/src/providers/openai.rs [1:150]"
+````rust filename="rig-core/src/providers/openai.rs [1:150]"
 //! OpenAI API client and Rig integration
 //!
 //! # Example
@@ -102,8 +105,7 @@ impl Client {
     }
 
     /// Create a new OpenAI client with the given API key and base API URL.
-```
-
+````
 
 Tool calling and response handling:
 
@@ -145,11 +147,13 @@ impl From<completion::ToolDefinition> for ToolDefinition {
     }
 ```
 
-
 For detailed API reference and additional features, see the OpenAI API documentation and Rig's API documentation.
 
 <br />
 
 <Cards>
-<Cards.Card title="API Reference (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/openai/index.html"/>
+  <Cards.Card
+    title="API Reference (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/openai/index.html"
+  />
 </Cards>

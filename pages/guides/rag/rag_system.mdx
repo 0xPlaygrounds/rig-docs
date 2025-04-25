@@ -8,20 +8,18 @@ Retrieval-Augmented Generation (RAG) is a powerful technique that enhances Large
 
 Rig is an open-source Rust library designed to simplify the development of LLM-powered applications, including RAG systems. In this guide, we'll walk through the process of building a functional RAG system using Rig in under 100 lines of code. Our system will be capable of answering questions based on the content of PDF documents, showcasing how RAG can be applied to real-world data sources. Let's dive in and start building!
 
-
 > 💡 **Tip**: New to Rust?
-> 
+>
 > This guide assumes some familiarity with Rust and a set-up coding environment. If you're just starting out or need to set up your environment, check out these quick guides:
-> 
+>
 > - [Introduction to Rust](https://www.rust-lang.org/learn)
 > - [Setting up Rust with VS Code](https://users.rust-lang.org/t/setting-up-rust-with-vs-code/76907)
 >
 > These resources will help you get up to speed quickly!
 
-
 ## Setting Up the Project
 
-Before we start coding, let's set up our Rust project and install the necessary dependencies. 
+Before we start coding, let's set up our Rust project and install the necessary dependencies.
 
 First, create a new Rust project in your coding environment:
 
@@ -46,6 +44,7 @@ pdf-extract = "0.7.3"
 ```
 
 Here's a brief explanation of each dependency:
+
 - `rig-core`: The main Rig library for building LLM applications
 - `tokio`: An asynchronous runtime for Rust
 - `anyhow`: For flexible error handling
@@ -246,7 +245,7 @@ Here's an example interaction with the RAG system:
 
 ```plaintext
 Welcome to the chatbot! Type 'exit' to quit.
-> hi 
+> hi
 ========================== Response ============================
 Hello! How can I assist you today?
 ================================================================
@@ -289,6 +288,7 @@ Let's break down what we're looking at:
 4. **Cross-Document Analysis**: The final question showcases the agent's ability to draw connections between two different texts, comparing and contrasting their themes and ideas.
 
 This is RAG in action, and it's made possible by the combination of:
+
 - The vector store, which allows for efficient retrieval of relevant information
 - The embedding model, which captures the semantic meaning of the text
 - The large language model (GPT-3.5-turbo in this case), which generates coherent and contextually relevant responses
@@ -325,4 +325,4 @@ While our current implementation is suitable for local testing and small-scale u
 
 7. **Asynchronous Processing**: For handling large documents or many concurrent users, consider implementing asynchronous processing with a job queue.
 
-By addressing these considerations, you can turn this proof-of-concept into a robust, production-ready system. In a future guide, i'll walk  you through deploying a RAG system built with Rig to production, subscribe to my blog or join our community to be notified.
+By addressing these considerations, you can turn this proof-of-concept into a robust, production-ready system. In a future guide, i'll walk you through deploying a RAG system built with Rig to production, subscribe to my blog or join our community to be notified.

@@ -2,7 +2,6 @@
 
 Text classification and extraction are essential for AI systems to interpret and utilize unstructured text data, with applications ranging from sentiment analysis in social media to named entity recognition in legal documents. This guide demonstrates how to build a robust text classification and extraction system using Rig, a powerful Rust library for developing applications powered by large language models (LLMs). By the end of this guide, you will know how to use Rig to implement an efficient, secure, and maintainable LLM application in Rust, complete with practical examples and best practices. Let's lock in!
 
-
 ## Introduction
 
 Text classification and extraction enable machines to understand and derive meaningful insights from unstructured text data. Text classification involves categorizing text documents into predefined classes, while information extraction focuses on identifying and extracting specific pieces of information from text.
@@ -193,7 +192,7 @@ struct SentimentClassification {
 async fn main() -> Result<()> {
     dotenv::dotenv().ok(); // Load environment variables securely
     let openai_client = openai::Client::from_env()?;
-    
+
     let sentiment_classifier = openai_client
         .extractor::<SentimentClassification>("gpt-3.5-turbo")
         .preamble("You are a sentiment analysis AI. Classify the sentiment of the given text.")
@@ -269,7 +268,7 @@ struct ExtractedEntities {
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     let openai_client = openai::Client::from_env()?;
-    
+
     let ner_extractor = openai_client
         .extractor::<ExtractedEntities>("gpt-3.5-turbo")
         .preamble("
@@ -318,7 +317,7 @@ struct TextAnalysis {
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     let openai_client = openai::Client::from_env()?;
-    
+
     let text_analyzer = openai_client
         .extractor::<TextAnalysis>("gpt-3.5-turbo")
         .preamble("
@@ -399,7 +398,7 @@ struct NewsArticleAnalysis {
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     let openai_client = openai::Client::from_env()?;
-    
+
     let news_analyzer = openai_client
         .extractor::<NewsArticleAnalysis>("gpt-4")
         .preamble("
@@ -412,7 +411,7 @@ async fn main() -> Result<()> {
         .build();
 
     let article = "/* Article text here */";
-    
+
     let result = news_analyzer.extract(article).await?;
 
     println!("Article Analysis:");

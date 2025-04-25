@@ -3,10 +3,9 @@ title: MongoDB
 description: This section describes the MongoDB integration.
 ---
 
-import { Cards } from 'nextra/components'
+import { Cards } from "nextra/components";
 
 # MongoDB Integration
-
 
 # Vector Store Implementation - MongoDB
 
@@ -45,7 +44,7 @@ let results = index.top_n::<Document>("search query", 5).await?;
 
 1. **Vector Index Structure**:
 
-```rust filename="rig-mongodb/src/lib.rs [82-89]"
+````rust filename="rig-mongodb/src/lib.rs [82-89]"
 /// The `MongoDbVectorIndex` struct is the core component for interacting with MongoDB's vector search capabilities.
 /// It encapsulates the MongoDB collection, the embedding model, and the index name, along with search parameters.
 ///
@@ -70,10 +69,10 @@ pub struct MongoDbVectorIndex {
 }
 
 
-```
-
+````
 
 2. **Search Parameters**:
+
 - Configurable field name for embeddings
 - Customizable number of candidates
 - Support for MongoDB-specific search options
@@ -88,7 +87,7 @@ The MongoDB implementation uses an aggregation pipeline with three main stages:
 
 Reference implementation:
 
-```246:285:rig-mongodb/src/lib.rs
+````246:285:rig-mongodb/src/lib.rs
     ///     .top_n::<Definition>("My boss says I zindle too much, what does that mean?", 1)
     ///     .await?;
     /// ```
@@ -102,17 +101,18 @@ Reference implementation:
         let mut cursor = self
             .collection
             .aggregate([
-```
-
+````
 
 ### Document Schema Requirements
 
 Documents must include:
+
 - A unique identifier field (`_id`)
 - An embedding vector field (configurable name)
 - Optional additional fields for storage
 
 Example schema:
+
 ```rust
 #[derive(Embed, Clone, Deserialize, Debug)]
 struct Document {
@@ -128,16 +128,15 @@ struct Document {
 
 The collection must have a vector search index configured:
 
-
 ```rust filename="rig-mongodb/tests/integration_tests.rs [108-127]"
 
 
 ```
 
-
 ## Special Considerations
 
 1. **Index Validation**: The implementation automatically validates:
+
    - Index existence
    - Vector dimensions
    - Similarity metric
@@ -148,7 +147,6 @@ The collection must have a vector search index configured:
 
 
 ```
-
 
 3. **Performance Optimization**:
    - Uses MongoDB's native vector search capabilities
@@ -202,10 +200,12 @@ async fn main() -> Result<(), anyhow::Error> {
 
 ```
 
-
 For detailed API reference and additional features, see the MongoDB Atlas Vector Search documentation and Rig's API documentation.
 
-<br/>
+<br />
 <Cards>
-<Cards.Card title="API Reference (docs.rs)" href="https://docs.rs/rig-mongodb/latest/rig_mongodb/index.html"/>
+  <Cards.Card
+    title="API Reference (docs.rs)"
+    href="https://docs.rs/rig-mongodb/latest/rig_mongodb/index.html"
+  />
 </Cards>

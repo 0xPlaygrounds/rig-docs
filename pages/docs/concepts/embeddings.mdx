@@ -2,7 +2,8 @@
 title: Embeddings
 description: This section contains the concepts for Rig.
 ---
-import { Cards } from 'nextra/components'
+
+import { Cards } from "nextra/components";
 
 # Embeddings in Rig
 
@@ -20,11 +21,13 @@ An embedding is a vector representation of data (usually text) where semanticall
 ### The Embedding Process
 
 1. **Document Preparation**
+
    - Documents implement the `Embed` trait
    - The `TextEmbedder` accumulates text to be embedded
    - Built-in implementations for common types (strings, numbers, JSON)
 
 2. **Batch Processing**
+
    - The `EmbeddingsBuilder` collects multiple documents
    - Documents are batched for efficient API calls
    - Handles concurrent embedding generation
@@ -46,7 +49,7 @@ let model = openai_client.embedding_model("text-embedding-ada-002");
 
 // Build embeddings
 let embeddings = EmbeddingsBuilder::new(model)
-    .document("Some text")? 
+    .document("Some text")?
     .document("More text")?
     .build()
     .await?;
@@ -57,12 +60,13 @@ let embeddings = EmbeddingsBuilder::new(model)
 Rig provides several distance metrics for comparing embeddings:
 
 - Cosine similarity
-- Angular distance  
+- Angular distance
 - Euclidean distance
 - Manhattan distance
 - Chebyshev distance
 
 Example:
+
 ```rust
 let similarity = embedding1.cosine_similarity(&embedding2, false);
 let distance = embedding1.euclidean_distance(&embedding2);
@@ -90,16 +94,18 @@ impl Embed for Document {
 ## Best Practices
 
 1. **Document Preparation**
+
    - Clean and normalize text before embedding
    - Consider chunking large documents
    - Remove irrelevant embedding content
 
 2. **Error Handling**
+
    - Handle provider API errors gracefully
    - Validate vector dimensions
    - Check for empty or invalid input
 
-4. **Batching**
+3. **Batching**
    - Use `EmbeddingsBuilder` for multiple documents
    - Respects provider's max batch size
    - Automatically handles concurrent processing
@@ -113,7 +119,7 @@ impl Embed for Document {
 <br />
 
 <Cards.Card
-    title="API Reference (Embeddings)"
-    href="https://docs.rs/rig-core/latest/rig/embeddings/index.html"
-    arrow
+  title="API Reference (Embeddings)"
+  href="https://docs.rs/rig-core/latest/rig/embeddings/index.html"
+  arrow
 />

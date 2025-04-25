@@ -2,13 +2,14 @@
 title: Qdrant
 ---
 
-import { Cards } from 'nextra/components'
+import { Cards } from "nextra/components";
 
 # Rig-Qdrant Integration
 
 The `rig-qdrant` crate provides a vector store implementation using Qdrant as the underlying datastore. Qdrant is a highly performant vector search database built in Rust.
 
 ## Key Features
+
 - **Integration with OpenAI**: Utilizes OpenAI's embedding models to generate vector representations of data.
 - **Flexible Querying**: Offers methods to perform top-N searches and retrieve node IDs based on vector similarity.
 
@@ -97,7 +98,10 @@ async fn main() -> Result<(), anyhow::Error> {
 - **Examples**: See the [examples](https://github.com/0xPlaygrounds/rig/tree/main/rig-qdrant/examples) directory for detailed usage scenarios.
 - **Qdrant Documentation**: Refer to the [Qdrant documentation](https://qdrant.tech/documentation/concepts/collections/) for more information on setting up and using collections.
 
-<br/>
+<br />
 <Cards>
-<Cards.Card title="API Reference (docs.rs)" href="https://docs.rs/rig-qdrant/latest/rig-qdrant/index.html"/>
+  <Cards.Card
+    title="API Reference (docs.rs)"
+    href="https://docs.rs/rig-qdrant/latest/rig-qdrant/index.html"
+  />
 </Cards>

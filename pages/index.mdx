@@ -1,9 +1,16 @@
-import { Cards } from 'nextra/components'
-import { Blocks, WalletCards, Rocket, BrainCircuit, Lightbulb } from 'lucide-react'
-import Image from 'next/image'
-import Link from 'next/link'
+import { Cards } from "nextra/components";
+import {
+  Blocks,
+  WalletCards,
+  Rocket,
+  BrainCircuit,
+  Lightbulb,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 # Get Started with `cargo add rig-core{:bash}`
+
 Rig is a Rust library for building portable, modular, and lightweight Fullstack AI Agents. You can find API documentation on [docs.rs](https://docs.rs/rig-core).
 
 <details>
@@ -11,9 +18,11 @@ Rig is a Rust library for building portable, modular, and lightweight Fullstack 
 Why Rig?
 </summary>
 
-  -  <BrainCircuit />Full support for LLM completion and embedding workflows
-  -  <Lightbulb /> Simple but powerful common abstractions over LLM providers (e.g. OpenAI, Cohere) and vector stores (e.g. MongoDB, in-memory)
-  -  <Blocks /> Integrate LLMs in your app with minimal boilerplate
+- <BrainCircuit />
+  Full support for LLM completion and embedding workflows
+- <Lightbulb /> Simple but powerful common abstractions over LLM providers (e.g.
+  OpenAI, Cohere) and vector stores (e.g. MongoDB, in-memory)
+- <Blocks /> Integrate LLMs in your app with minimal boilerplate
 
 </details>
 
@@ -21,7 +30,7 @@ Why Rig?
 <summary>
 Why Rust?
 </summary>
-Rust 🦀 has many advantages over Python or JS/TS, used by AI frameworks like Langchain, LlamaIndex, Marvin, PyDantic, etc.   
+Rust 🦀 has many advantages over Python or JS/TS, used by AI frameworks like Langchain, LlamaIndex, Marvin, PyDantic, etc.
 
 To vizualise's Rust's edge over other languages, you can check out this [tool](https://benjdd.com/languages/).
 
@@ -31,308 +40,385 @@ To vizualise's Rust's edge over other languages, you can check out this [tool](h
 
 Note: Rig does not support WASM (yet), but we're working on it!
 
-
 </details>
 
 <br />
 <Cards>
-  <Cards.Card id="card"
+  <Cards.Card
+    id="card"
     title="🚀 Quick Start Guide"
     href="/docs/quickstart/getting_started"
-    children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
+    children={
+      <div
+        style={{
+          fontSize: "0.9em",
+          color: "#666",
+          whiteSpace: "normal",
+          wordWrap: "break-word",
+        }}
+      >
         Get started quickly with our comprehensive guide.
-        </div>
+      </div>
     }
   />
-  <Cards.Card id="card"
+  <Cards.Card
+    id="card"
     title="🏛️ Architecture"
     href="/docs/architecture"
-    children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-      Learn about Rig's architecture and design principles.
-    </div>
-  }
+    children={
+      <div
+        style={{
+          fontSize: "0.9em",
+          color: "#666",
+          whiteSpace: "normal",
+          wordWrap: "break-word",
+        }}
+      >
+        Learn about Rig's architecture and design principles.
+      </div>
+    }
   />
-  <Cards.Card id="card"
+  <Cards.Card
+    id="card"
     title="🪜 Tutorials & Guides"
     href="/guides"
-    children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-      Explore tutorials and guides to enhance your skills.
-    </div>
-  }
+    children={
+      <div
+        style={{
+          fontSize: "0.9em",
+          color: "#666",
+          whiteSpace: "normal",
+          wordWrap: "break-word",
+        }}
+      >
+        Explore tutorials and guides to enhance your skills.
+      </div>
+    }
   />
   <Cards.Card
     title="🍳 Cookbook (Examples)"
     href="/examples"
-    children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-      Discover recipes and examples to build with Rig.
-    </div>
-  }
+    children={
+      <div
+        style={{
+          fontSize: "0.9em",
+          color: "#666",
+          whiteSpace: "normal",
+          wordWrap: "break-word",
+        }}
+      >
+        Discover recipes and examples to build with Rig.
+      </div>
+    }
   />
   <Cards.Card
     title="🤝 How to Contribute?"
     href="/docs/how_to_contribute"
-    children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-      Learn how to contribute to the Rig project.
-    </div>
-  }
+    children={
+      <div
+        style={{
+          fontSize: "0.9em",
+          color: "#666",
+          whiteSpace: "normal",
+          wordWrap: "break-word",
+        }}
+      >
+        Learn how to contribute to the Rig project.
+      </div>
+    }
   />
   <Cards.Card
     title="❓ FAQs"
     href=""
-    children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-      Coming soon™️...
-    </div>
-  }
+    children={
+      <div
+        style={{
+          fontSize: "0.9em",
+          color: "#666",
+          whiteSpace: "normal",
+          wordWrap: "break-word",
+        }}
+      >
+        Coming soon™️...
+      </div>
+    }
   />
   <Cards.Card
     title="🔖 Release Notes"
     href="https://github.com/0xPlaygrounds/rig/discussions"
     target="_blank"
-    children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-      Stay updated with the latest release notes.
-    </div>
-  }
+    children={
+      <div
+        style={{
+          fontSize: "0.9em",
+          color: "#666",
+          whiteSpace: "normal",
+          wordWrap: "break-word",
+        }}
+      >
+        Stay updated with the latest release notes.
+      </div>
+    }
   />
   <Cards.Card
     title="💬 Feedback"
     href="https://github.com/0xPlaygrounds/rig-docs/issues/new?title=Feedback%20for%20%E2%80%9COverview%E2%80%9D&labels=feedback"
     target="_blank"
-    children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-      Share your feedback and help us improve.
-    </div>
-  }
+    children={
+      <div
+        style={{
+          fontSize: "0.9em",
+          color: "#666",
+          whiteSpace: "normal",
+          wordWrap: "break-word",
+        }}
+      >
+        Share your feedback and help us improve.
+      </div>
+    }
   />
   <Cards.Card
     title="👥 Join the Discord"
     href="https://discord.gg/playgrounds"
     target="_blank"
-    children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
-      Join our community on Discord for discussions.
-    </div>
-  }
+    children={
+      <div
+        style={{
+          fontSize: "0.9em",
+          color: "#666",
+          whiteSpace: "normal",
+          wordWrap: "break-word",
+        }}
+      >
+        Join our community on Discord for discussions.
+      </div>
+    }
   />
 </Cards>
-## High-level features
- - Full support for LLM completion and embedding workflows
- - Simple but powerful common abstractions over LLM providers (e.g. OpenAI, Cohere) and vector stores (e.g. MongoDB, in-memory)
- - Integrate LLMs in your app with minimal boilerplate
+## High-level features - Full support for LLM completion and embedding workflows
+- Simple but powerful common abstractions over LLM providers (e.g. OpenAI,
+Cohere) and vector stores (e.g. MongoDB, in-memory) - Integrate LLMs in your app
+with minimal boilerplate
 
 ## Integrations
+
 ### Model Providers
+
 Rig natively supports the following completion and embedding model provider integrations:
- <br />
+
+<br />
 <div className="logo-carousel-container">
-  <div className='w-full max-w-[100vw] mx-auto mb-4 mt-2 opacity-1'>
-    <div className='w-full text-center space-y-8'>
-      <div className='relative overflow-hidden'>
-        <div className='flex sm:flex-wrap sm:justify-center gap-8 sm:gap-12'>
-          <div className='flex gap-8 animate-scroll'>
+  <div className="w-full max-w-[100vw] mx-auto mb-4 mt-2 opacity-1">
+    <div className="w-full text-center space-y-8">
+      <div className="relative overflow-hidden">
+        <div className="flex sm:flex-wrap sm:justify-center gap-8 sm:gap-12">
+          <div className="flex gap-8 animate-scroll">
             <Link
-              href='https://anthropic.com/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='flex flex-col items-center shrink-0 group'
+              href="https://anthropic.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center shrink-0 group"
             >
-              <div className='h-10 flex items-center'>
+              <div className="h-10 flex items-center">
                 <Image
-                  src='https://assets.dev.arc.fun/dev/model-providers/anthropic.png'
-                  alt='Anthropic'
+                  src="https://assets.dev.arc.fun/dev/model-providers/anthropic.png"
+                  alt="Anthropic"
                   width={140}
                   height={20}
-                  className='group-hover:opacity-60 transition-opacity'
+                  className="group-hover:opacity-60 transition-opacity"
                 />
               </div>
             </Link>
             <Link
-              href='https://deepseek.ai/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='flex flex-col items-center shrink-0 group'
+              href="https://deepseek.ai/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center shrink-0 group"
             >
-              <div className='h-10 flex items-center'>
+              <div className="h-10 flex items-center">
                 <Image
-                  src='https://assets.dev.arc.fun/dev/model-providers/deepseek.png'
-                  alt='DeepSeek'
+                  src="https://assets.dev.arc.fun/dev/model-providers/deepseek.png"
+                  alt="DeepSeek"
                   width={140}
                   height={24}
-                  className='group-hover:opacity-60 transition-opacity'
+                  className="group-hover:opacity-60 transition-opacity"
                 />
               </div>
             </Link>
             <Link
-              href='https://deepmind.google/technologies/gemini/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='flex flex-col items-center shrink-0 group'
+              href="https://deepmind.google/technologies/gemini/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center shrink-0 group"
             >
-              <div className='h-10 flex items-center'>
+              <div className="h-10 flex items-center">
                 <Image
-                  src='https://assets.dev.arc.fun/dev/model-providers/gemini.png'
-                  alt='Gemini'
+                  src="https://assets.dev.arc.fun/dev/model-providers/gemini.png"
+                  alt="Gemini"
                   width={80}
                   height={16}
-                  className='group-hover:opacity-60 transition-opacity'
+                  className="group-hover:opacity-60 transition-opacity"
                 />
               </div>
             </Link>
             <Link
-              href='https://ollama.ai/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='flex flex-col items-center shrink-0 group'
+              href="https://ollama.ai/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center shrink-0 group"
             >
-              <div className='h-10 flex items-center'>
+              <div className="h-10 flex items-center">
                 <Image
-                  src='https://assets.dev.arc.fun/dev/model-providers/ollama.png'
-                  alt='Ollama'
+                  src="https://assets.dev.arc.fun/dev/model-providers/ollama.png"
+                  alt="Ollama"
                   width={28}
                   height={28}
-                  className='group-hover:opacity-60 transition-opacity'
+                  className="group-hover:opacity-60 transition-opacity"
                 />
               </div>
             </Link>
             <Link
-              href='https://openai.com/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='flex flex-col items-center shrink-0 group'
+              href="https://openai.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center shrink-0 group"
             >
-              <div className='h-10 flex items-center'>
+              <div className="h-10 flex items-center">
                 <Image
-                  src='https://assets.dev.arc.fun/dev/model-providers/openai.png'
-                  alt='OpenAI'
+                  src="https://assets.dev.arc.fun/dev/model-providers/openai.png"
+                  alt="OpenAI"
                   width={120}
                   height={24}
-                  className='group-hover:opacity-60 transition-opacity'
+                  className="group-hover:opacity-60 transition-opacity"
                 />
               </div>
             </Link>
             <Link
-              href='https://www.perplexity.ai/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='flex flex-col items-center shrink-0 group'
+              href="https://www.perplexity.ai/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center shrink-0 group"
             >
-              <div className='h-10 flex items-center'>
+              <div className="h-10 flex items-center">
                 <Image
-                  src='https://assets.dev.arc.fun/dev/model-providers/perplexity.png'
-                  alt='Perplexity'
+                  src="https://assets.dev.arc.fun/dev/model-providers/perplexity.png"
+                  alt="Perplexity"
                   width={140}
                   height={24}
-                  className='group-hover:opacity-60 transition-opacity'
+                  className="group-hover:opacity-60 transition-opacity"
                 />
               </div>
             </Link>
             <Link
-              href='https://huggingface.co/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='flex flex-col items-center shrink-0 group'
+              href="https://huggingface.co/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center shrink-0 group"
             >
-            <div className='h-10 flex items-center'>
-              <Image
-                src='https://assets.dev.arc.fun/dev/model-providers/huggingface.png'
-                alt='Hugging Face'
-                width={140}
-                height={24}
-                className='group-hover:opacity-60 transition-opacity'
-              />
-            </div>
+              <div className="h-10 flex items-center">
+                <Image
+                  src="https://assets.dev.arc.fun/dev/model-providers/huggingface.png"
+                  alt="Hugging Face"
+                  width={140}
+                  height={24}
+                  className="group-hover:opacity-60 transition-opacity"
+                />
+              </div>
             </Link>
             <Link
-              href='https://xai.com/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='flex flex-col items-center shrink-0 group'
+              href="https://xai.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center shrink-0 group"
             >
-            <div className='h-10 flex items-center'>
-              <Image
-                src='https://assets.dev.arc.fun/dev/model-providers/xai.png'
-                alt='XAI'
-                width={140}
-                height={24}
-                className='group-hover:opacity-60 transition-opacity'
-              />
-            </div>
+              <div className="h-10 flex items-center">
+                <Image
+                  src="https://assets.dev.arc.fun/dev/model-providers/xai.png"
+                  alt="XAI"
+                  width={140}
+                  height={24}
+                  className="group-hover:opacity-60 transition-opacity"
+                />
+              </div>
             </Link>
             {/* Duplicate set for continuous scroll effect */}
             <Link
-              href='https://anthropic.com/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='flex flex-col items-center shrink-0 group'
+              href="https://anthropic.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center shrink-0 group"
             >
-              <div className='h-10 flex items-center'>
+              <div className="h-10 flex items-center">
                 <Image
-                  src='https://assets.dev.arc.fun/dev/model-providers/anthropic.png'
-                  alt='Anthropic'
+                  src="https://assets.dev.arc.fun/dev/model-providers/anthropic.png"
+                  alt="Anthropic"
                   width={140}
                   height={20}
-                  className='group-hover:opacity-60 transition-opacity'
+                  className="group-hover:opacity-60 transition-opacity"
                 />
               </div>
             </Link>
             <Link
-              href='https://deepseek.ai/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='flex flex-col items-center shrink-0 group'
+              href="https://deepseek.ai/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center shrink-0 group"
             >
-              <div className='h-10 flex items-center'>
+              <div className="h-10 flex items-center">
                 <Image
-                  src='https://assets.dev.arc.fun/dev/model-providers/deepseek.png'
-                  alt='DeepSeek'
+                  src="https://assets.dev.arc.fun/dev/model-providers/deepseek.png"
+                  alt="DeepSeek"
                   width={140}
                   height={24}
-                  className='group-hover:opacity-60 transition-opacity'
+                  className="group-hover:opacity-60 transition-opacity"
                 />
               </div>
             </Link>
             <Link
-              href='https://deepmind.google/technologies/gemini/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='flex flex-col items-center shrink-0 group'
+              href="https://deepmind.google/technologies/gemini/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center shrink-0 group"
             >
-              <div className='h-10 flex items-center'>
+              <div className="h-10 flex items-center">
                 <Image
-                  src='https://assets.dev.arc.fun/dev/model-providers/gemini.png'
-                  alt='Gemini'
+                  src="https://assets.dev.arc.fun/dev/model-providers/gemini.png"
+                  alt="Gemini"
                   width={80}
                   height={16}
-                  className='group-hover:opacity-60 transition-opacity'
+                  className="group-hover:opacity-60 transition-opacity"
                 />
               </div>
             </Link>
             <Link
-              href='https://huggingface.co/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='flex flex-col items-center shrink-0 group'
+              href="https://huggingface.co/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center shrink-0 group"
             >
-              <div className='h-10 flex items-center'>
+              <div className="h-10 flex items-center">
                 <Image
-                  src='https://assets.dev.arc.fun/dev/model-providers/huggingface.png'
-                  alt='Hugging Face'
-                  width={140}
-                  height={24} 
-                  className='group-hover:opacity-60 transition-opacity'
-                />
-              </div>
-            </Link>
-            <Link
-              href='https://xai.com/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='flex flex-col items-center shrink-0 group'
-            >
-              <div className='h-10 flex items-center'>
-                <Image
-                  src='https://assets.dev.arc.fun/dev/model-providers/xai.png'
-                  alt='XAI'
+                  src="https://assets.dev.arc.fun/dev/model-providers/huggingface.png"
+                  alt="Hugging Face"
                   width={140}
                   height={24}
-                  className='group-hover:opacity-60 transition-opacity'
+                  className="group-hover:opacity-60 transition-opacity"
+                />
+              </div>
+            </Link>
+            <Link
+              href="https://xai.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center shrink-0 group"
+            >
+              <div className="h-10 flex items-center">
+                <Image
+                  src="https://assets.dev.arc.fun/dev/model-providers/xai.png"
+                  alt="XAI"
+                  width={140}
+                  height={24}
+                  className="group-hover:opacity-60 transition-opacity"
                 />
               </div>
             </Link>
@@ -342,21 +428,33 @@ Rig natively supports the following completion and embedding model provider inte
     </div>
   </div>
 </div>
- You can also implement your own model provider integration by defining types that
- implement the [CompletionModel](crate::completion::CompletionModel) and [EmbeddingModel](crate::embeddings::EmbeddingModel) traits.
+You can also implement your own model provider integration by defining types
+that implement the [CompletionModel](crate::completion::CompletionModel) and
+[EmbeddingModel](crate::embeddings::EmbeddingModel) traits.
 
- The full list of model providers is available under [Docs (Model Providers)](/docs/integrations/model_providers).
- ### Vector Stores
- Rig currently supports the following vector store integrations via companion crates:
- - `rig-mongodb`: Vector store implementation for MongoDB
- - `rig-lancedb`: Vector store implementation for LanceDB
- - `rig-neo4j`: Vector store implementation for Neo4j
- - `rig-qdrant`: Vector store implementation for Qdrant
+The full list of model providers is available under [Docs (Model Providers)](/docs/integrations/model_providers).
 
- You can also implement your own vector store integration by defining types that
- implement the [VectorStoreIndex](crate::vector_store::VectorStoreIndex) trait.
+### Vector Stores
 
- ## Simple example:
+Rig currently supports the following vector store integrations via companion crates:
+
+- `rig-mongodb`: Vector store implementation for MongoDB
+- `rig-lancedb`: Vector store implementation for LanceDB
+- `rig-neo4j`: Vector store implementation for Neo4j
+- `rig-qdrant`: Vector store implementation for Qdrant
+
+Rig currently supports the following vector store integrations via companion crates:
+
+- `rig-mongodb`: Vector store implementation for MongoDB
+- `rig-lancedb`: Vector store implementation for LanceDB
+- `rig-neo4j`: Vector store implementation for Neo4j
+- `rig-qdrant`: Vector store implementation for Qdrant
+
+You can also implement your own vector store integration by defining types that
+implement the [VectorStoreIndex](crate::vector_store::VectorStoreIndex) trait.
+
+## Simple example:
+
 ```rust
   use rig::{completion::Prompt, providers::openai};
 
@@ -377,5 +475,6 @@ Rig natively supports the following completion and embedding model provider inte
       println!("GPT-4: {response}");
   }
 ```
+
 Note: using `#[tokio::main]{:rust}` requires you enable tokio's `macros{:yaml}` and `rt-multi-thread{:yaml}` features
 or just `full{:yaml}` to enable all features `cargo add tokio --features macros,rt-multi-thread{:bash}`

@@ -3,35 +3,36 @@ title: 🏛️ Architecture
 description: This section contains the architecture of Rig.
 ---
 
-import { FileTree } from 'nextra/components'
+import { FileTree } from "nextra/components";
 
 # Architecture
+
 <FileTree>
-    <FileTree.Folder name="rig-core" defaultOpen>
-        <FileTree.Folder name="loaders" defaultOpen>
-            <FileTree.File name="file.rs" />
-            <FileTree.File name="pdf.rs" />
-            <FileTree.File name="...(other loaders)" />
-        </FileTree.Folder>
-        <FileTree.Folder name="providers" defaultOpen>
-            <FileTree.Folder name="openai" defaultOpen>
-                <FileTree.File name="mod.rs" />
-                <FileTree.File name="client.rs" />
-                <FileTree.File name="completion.rs" />
-            </FileTree.Folder>
-            <FileTree.Folder name="... (other providers)" />
-        </FileTree.Folder>
-        <FileTree.Folder name="vector_store">
-            <FileTree.File name="in_memory_store.rs" />
-        </FileTree.Folder>
+  <FileTree.Folder name="rig-core" defaultOpen>
+    <FileTree.Folder name="loaders" defaultOpen>
+      <FileTree.File name="file.rs" />
+      <FileTree.File name="pdf.rs" />
+      <FileTree.File name="...(other loaders)" />
     </FileTree.Folder>
-    <FileTree.Folder name="rig-mongodb" defaultOpen>
-        <FileTree.File name="lib.rs" />
-    </FileTree.Folder>
-    <FileTree.Folder name="rig-neo4j">
+    <FileTree.Folder name="providers" defaultOpen>
+      <FileTree.Folder name="openai" defaultOpen>
         <FileTree.File name="mod.rs" />
+        <FileTree.File name="client.rs" />
+        <FileTree.File name="completion.rs" />
+      </FileTree.Folder>
+      <FileTree.Folder name="... (other providers)" />
     </FileTree.Folder>
-    <FileTree.Folder name="..." />
+    <FileTree.Folder name="vector_store">
+      <FileTree.File name="in_memory_store.rs" />
+    </FileTree.Folder>
+  </FileTree.Folder>
+  <FileTree.Folder name="rig-mongodb" defaultOpen>
+    <FileTree.File name="lib.rs" />
+  </FileTree.Folder>
+  <FileTree.Folder name="rig-neo4j">
+    <FileTree.File name="mod.rs" />
+  </FileTree.Folder>
+  <FileTree.Folder name="..." />
 </FileTree>
 
 ## Core concepts
@@ -60,4 +61,8 @@ Those can then be used as the knowledge base for a RAG enabled [Agent](crate::ag
 as a source of context documents in a custom architecture that use multiple LLMs or agents.
 
 ## The architecture of the Rig framework, in one picture
-<img src="/images/rig_architecture.jpg" alt="The architecture of the Rig ecosystem" />
+
+<img
+  src="/images/rig_architecture.jpg"
+  alt="The architecture of the Rig ecosystem"
+/>

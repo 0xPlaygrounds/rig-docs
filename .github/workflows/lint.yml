@@ -1,0 +1,47 @@
+name: 🔎 Code Check
+on:
+  push:
+    branches:
+      - main
+  pull_request: {}
+
+concurrency:
+  group: ${{ github.job }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: ⬣ ESLint, ʦ TypeScript, 💅 Prettier, and 🃏 Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.9.0
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Download deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint:strict
+
+      - name: Type check
+        run: pnpm run typecheck
+
+      - name: Prettier check
+        run: pnpm run format:check
+
+      # There are currently no tests that exist here.
+      # `pnpm run tests` has `--passWithNoTests` added to ensure this passes if there are no tests to be run.
+      # We should ensure that if we do add any tests, we remove this flag.
+      - name: Run jest
+        run: pnpm run test

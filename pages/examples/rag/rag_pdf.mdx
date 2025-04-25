@@ -10,6 +10,7 @@ description: This example demonstrates how to use Rig, a powerful Rust library f
 This project demonstrates a Retrieval-Augmented Generation (RAG) system built with Rig, a Rust library for developing LLM-powered applications. The system processes PDF documents, creates embeddings, and uses OpenAI's GPT-3.5-turbo model to answer questions based on the content of these documents.
 
 In this example, we use two PDF documents:
+
 1. "Moore's Law for Everything" by Sam Altman
 2. "The Last Question" by Isaac Asimov
 
@@ -24,6 +25,7 @@ In this example, we use two PDF documents:
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
+
 - Rust (latest stable version)
 - Cargo (Rust's package manager)
 
@@ -32,12 +34,14 @@ You'll also need an OpenAI API key. If you don't have one, sign up at [OpenAI's 
 ## Setup
 
 1. Clone this repository:
+
    ```
    git clone this repo
    cd pdf-rag-system
    ```
 
 2. Set your OpenAI API key as an environment variable:
+
    ```
    export OPENAI_API_KEY=your_api_key_here
    ```
@@ -49,6 +53,7 @@ You'll also need an OpenAI API key. If you don't have one, sign up at [OpenAI's 
 ## Running the Application
 
 1. Build and run the application:
+
    ```
    cargo run
    ```
@@ -65,7 +70,7 @@ You'll also need an OpenAI API key. If you don't have one, sign up at [OpenAI's 
 RAG System ready. Type 'exit' to quit.
 Enter your question: tell me the premise of what sam altman is talking about
 Response: Sam Altman discusses the coming technological revolution driven by powerful artificial intelligence (AI) systems that can think, learn, and perform tasks currently done by people. He highlights how this AI revolution will lead to the creation of phenomenal wealth but also emphasizes the need for policy changes to distribute this wealth and ensure inclusivity in society. Altman proposes the idea of embracing AI advancements, transitioning taxation from labor to capital (such as companies and land), and distributing wealth equitably through the American Equity Fund. This plan aims to improve the standard of living for everyone by leveraging technology and fair economic policies in a rapidly changing future.
-Enter your question: 
+Enter your question:
 ```
 
 ## How It Works
@@ -88,6 +93,7 @@ Enter your question:
 ## Troubleshooting
 
 If you encounter any issues:
+
 - Ensure your OpenAI API key is correctly set.
 - Verify that the PDF documents are in the correct location and are readable.
 - Check that all dependencies are properly installed by running `cargo build`.
@@ -95,13 +101,13 @@ If you encounter any issues:
 ## Dependencies
 
 This project uses the following main dependencies:
+
 - `rig-core`: For building LLM-powered applications
 - `pdf-extract`: For extracting text from PDF files
 - `tokio`: For asynchronous runtime
 - `anyhow`: For error handling
 
 For a complete list of dependencies, refer to the `Cargo.toml` file.
-
 
 ## Contributing
 

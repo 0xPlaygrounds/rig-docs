@@ -2,21 +2,21 @@
 
 **TL;DR**
 
-* A step-by-step walkthrough on deploying a simple AI Agent built with [Rig](https://github.com/0xPlaygrounds/rig), a fullstack agent framework, on AWS Lambda using the cargo lambda CLI.
-* Comparison of performance metrics (memory usage, execution time, and cold starts) with a similar deployed Agent built with [LangChain](https://www.langchain.com).
-* **Rig vs. Langchain agent on AWS Lambda**
-    1. 🪶 Lower memory footprint (~26MB vs ~130MB)
-    2. ⏩ Faster cold starts (90ms vs. 1900ms)
-    3. 🧘‍♂️ More consistent performance across memory configuration
+- A step-by-step walkthrough on deploying a simple AI Agent built with [Rig](https://github.com/0xPlaygrounds/rig), a fullstack agent framework, on AWS Lambda using the cargo lambda CLI.
+- Comparison of performance metrics (memory usage, execution time, and cold starts) with a similar deployed Agent built with [LangChain](https://www.langchain.com).
+- **Rig vs. Langchain agent on AWS Lambda**
+  1. 🪶 Lower memory footprint (~26MB vs ~130MB)
+  2. ⏩ Faster cold starts (90ms vs. 1900ms)
+  3. 🧘‍♂️ More consistent performance across memory configuration
 
 Welcome to the series **Deploy Your Rig Application**!
 Apps built with Rig can vary in complexity across three core dimensions: LLM usage, knowledge bases for RAG, and the compute infrastructure where the application is deployed. In this series, we’ll explore how different combinations of these dimensions can be configured for production use.
 
 Today, we’ll start with a simple Rig agent that uses the [OpenAI model GPT-4-turbo](https://platform.openai.com/docs/models/gpt-4o), does not rely on a vector store (ie.: no RAGing), and will be deployed on AWS Lambda.
 
-This blog will provide a step-by-step deployment guide for the simple Rig app, showcase performance metrics of the Rig app running on AWS Lambda, and compare these metrics with those of a [LangChain]((https://www.langchain.com)) app on the same platform.
+This blog will provide a step-by-step deployment guide for the simple Rig app, showcase performance metrics of the Rig app running on AWS Lambda, and compare these metrics with those of a [LangChain](<(https://www.langchain.com)>) app on the same platform.
 
-> *💡 If you're new to Rig and want to start from the beginning or are looking for additional tutorials, check out our [blog series](https://rig.rs/build-with-rig-guide.html).*
+> _💡 If you're new to Rig and want to start from the beginning or are looking for additional tutorials, check out our [blog series](https://rig.rs/build-with-rig-guide.html)._
 
 Let’s dive in!
 
@@ -24,9 +24,9 @@ Let’s dive in!
 
 Before we begin building, ensure you have the following:
 
-* A clone of the [`rig-entertainer-lambda`](https://github.com/garance-buricatu/rig-aws/tree/master/rig-entertainer-lambda) crate (or your own Rig application).
-* An AWS account  
-* An Open AI api key
+- A clone of the [`rig-entertainer-lambda`](https://github.com/garance-buricatu/rig-aws/tree/master/rig-entertainer-lambda) crate (or your own Rig application).
+- An AWS account
+- An Open AI api key
 
 ## AWS Lambda Quick Overview
 
@@ -38,15 +38,15 @@ AWS Lambda supports Rust through the use of the [OS-only runtime Amazon Linux 20
 
 #### REST API backend
 
-* Use the [`lambda-http`](https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/lambda-http) crate (from the runtime client) to write your function’s entrypoint.
-* Then, route traffic to your lambda via AWS API services like [Api Gateway](https://aws.amazon.com/api-gateway/), [App Sync](https://aws.amazon.com/pm/appsync), [VPC lattice](https://aws.amazon.com/vpc/lattice/), etc ...
-* If your lambda handles multiple endpoints of your API, the crate [axum](https://github.com/tokio-rs/axum) facilitates the routing within the lambda.
+- Use the [`lambda-http`](https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/lambda-http) crate (from the runtime client) to write your function’s entrypoint.
+- Then, route traffic to your lambda via AWS API services like [Api Gateway](https://aws.amazon.com/api-gateway/), [App Sync](https://aws.amazon.com/pm/appsync), [VPC lattice](https://aws.amazon.com/vpc/lattice/), etc ...
+- If your lambda handles multiple endpoints of your API, the crate [axum](https://github.com/tokio-rs/axum) facilitates the routing within the lambda.
 
 #### Event based task (15 mins max.)
 
-* Your lambda function is invoked by some event with the event passed as the payload. For example, configure your S3 bucket to trigger the lambda function when a new object is added to the bucket. The function will receive the new object in the payload and can further process it.
-* Use the [`lambda_runtime`](https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/lambda-runtime) crate with [`lambda_events`](https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/lambda-events) (from the runtime client) to write your function’s entrypoint.
-* Then, invoke your function either via [`lambda invoke` command](https://docs.aws.amazon.com/cli/latest/reference/lambda/invoke.html) or with integrated AWS triggers (ie. S3 UploadObject trigger).
+- Your lambda function is invoked by some event with the event passed as the payload. For example, configure your S3 bucket to trigger the lambda function when a new object is added to the bucket. The function will receive the new object in the payload and can further process it.
+- Use the [`lambda_runtime`](https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/lambda-runtime) crate with [`lambda_events`](https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/lambda-events) (from the runtime client) to write your function’s entrypoint.
+- Then, invoke your function either via [`lambda invoke` command](https://docs.aws.amazon.com/cli/latest/reference/lambda/invoke.html) or with integrated AWS triggers (ie. S3 UploadObject trigger).
 
 > For both cases, the crate [`tokio`](https://docs.rs/tokio/latest/tokio/) must also be added to your project as the lambda runtime client uses `tokio` to handle asynchronous calls.
 
@@ -62,7 +62,7 @@ The main takeaway here is that the app's `Cargo.toml` file must include the foll
 
 ### Now let's deploy it
 
-There are *many* ways to deploy Rust lambdas to AWS. Some out of the box options include the AWS CLI, the [cargo lambda](https://www.cargo-lambda.info/guide/getting-started.html) CLI, the AWS SAM CLI, the AWS CDK, and more. You can also decide to create a Dockerfile for your app and use that container image in your Lambda function instead. See some useful examples [here](https://docs.aws.amazon.com/lambda/latest/dg/rust-package.html).
+There are _many_ ways to deploy Rust lambdas to AWS. Some out of the box options include the AWS CLI, the [cargo lambda](https://www.cargo-lambda.info/guide/getting-started.html) CLI, the AWS SAM CLI, the AWS CDK, and more. You can also decide to create a Dockerfile for your app and use that container image in your Lambda function instead. See some useful examples [here](https://docs.aws.amazon.com/lambda/latest/dg/rust-package.html).
 
 In this blog, we'll use the cargo lambda CLI option to deploy the code in `rig-entertainer-rust` from your local machine to an AWS lambda:
 
@@ -96,7 +96,7 @@ Let's get more information on the metrics above by spamming the function and cal
 The x-axis is the memory allocation, and the y-axis is the average runtime over the 50 executions of `rig-entertainer`.
 
 > **Q.** We know that the function uses on average only 26MB per execution (which is less than the minimum memory allocation of 128MB) so why should we test higher memory configurations?
-**A.** [vCPUs are added to the lambda in proportion to memory](https://docs.aws.amazon.com/lambda/latest/operatorguide/computing-power.html) so adding memory could still affect the performance.
+> **A.** [vCPUs are added to the lambda in proportion to memory](https://docs.aws.amazon.com/lambda/latest/operatorguide/computing-power.html) so adding memory could still affect the performance.
 
 However, we can see that adding memory to the function (and therefore adding computational power) does not affect its performance at all. Since the [cost of a lambda execution](https://aws.amazon.com/lambda/pricing/) is calculated in GB-seconds, we get the most efficient lambda for the lowest price!
 ![Power Tuner Rust](/images/deploy_1/rig-power-tuner.png)

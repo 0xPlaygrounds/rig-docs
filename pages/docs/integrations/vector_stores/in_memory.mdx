@@ -3,7 +3,7 @@ title: In-Memory Vector Store
 description: This section describes the in-memory vector store integration.
 ---
 
-import { Cards } from 'nextra/components'
+import { Cards } from "nextra/components";
 
 # In-Memory Vector Store
 
@@ -34,12 +34,14 @@ pub struct InMemoryVectorStore<D: Serialize> {
 ```
 
 Key components:
+
 - **Key**: String identifier for each document
 - **Value**: Tuple containing:
   - `D`: The serializable document
   - `OneOrMany<Embedding>`: Either a single embedding or multiple embeddings
 
 The store supports multiple embeddings per document through the `OneOrMany` enum:
+
 ```rust
 pub enum OneOrMany<T> {
     One(T),
@@ -55,6 +57,7 @@ When searching, the store:
 4. Returns results sorted by similarity score
 
 Memory layout example:
+
 ```plaintext
 {
     "doc1" => (
@@ -72,6 +75,7 @@ Memory layout example:
 ```
 
 2. **Vector Search Implementation**:
+
 - Uses a binary heap for efficient top-N retrieval
 - Maintains scores using ordered floating-point comparisons
 - Supports multiple embeddings per document with best-match selection
@@ -81,6 +85,7 @@ Memory layout example:
 Three ways to add documents:
 
 1. **Auto-generated IDs**:
+
 ```rust
 let store = InMemoryVectorStore::from_documents(vec![
     (doc1, embedding1),
@@ -89,6 +94,7 @@ let store = InMemoryVectorStore::from_documents(vec![
 ```
 
 2. **Custom IDs**:
+
 ```rust
 let store = InMemoryVectorStore::from_documents_with_ids(vec![
     ("custom_id_1", doc1, embedding1),
@@ -97,6 +103,7 @@ let store = InMemoryVectorStore::from_documents_with_ids(vec![
 ```
 
 3. **Function-generated IDs**:
+
 ```rust
 let store = InMemoryVectorStore::from_documents_with_id_f(
     documents,
@@ -107,17 +114,20 @@ let store = InMemoryVectorStore::from_documents_with_id_f(
 ## Special Considerations
 
 ### 1. Memory Usage
+
 - All embeddings and documents are stored in RAM
 - Memory usage scales linearly with document count and embedding dimensions
 - Consider available memory when storing large datasets
 
 ### 2. Performance Characteristics
+
 - Fast lookups using HashMap for document retrieval
 - Efficient top-N selection using BinaryHeap
 - O(n) complexity for vector similarity search
 - Best for small to medium-sized datasets
 
 ### 3. Document Storage
+
 - Documents must be serializable
 - Supports multiple embeddings per document
 - Automatic pruning of large arrays (>400 elements)
@@ -187,7 +197,6 @@ The core search implementation:
 
 ```
 
-
 ### Error Handling
 
 The vector store operations can produce several error types:
@@ -208,15 +217,16 @@ match store.get_document::<MyDoc>("doc1") {
 }
 ```
 
-
 ## Best Practices
 
 1. **Memory Management**:
+
    - Monitor memory usage with large datasets
    - Consider chunking large document additions
    - Use cloud-based vector stores for production deployments
 
 2. **Document Structure**:
+
    - Keep documents serializable
    - Avoid extremely large arrays
    - Consider using custom ID generation for meaningful identifiers
@@ -229,11 +239,13 @@ match store.get_document::<MyDoc>("doc1") {
 ## Limitations
 
 1. **Scalability**:
+
    - Limited by available RAM
    - No persistence between program runs
    - Single-machine only
 
 2. **Features**:
+
    - No built-in indexing optimizations
    - No metadata filtering
    - No automatic persistence
@@ -252,16 +264,19 @@ The `InMemoryVectorStore` is thread-safe for concurrent reads but requires exclu
 For concurrent write access, consider wrapping the store in a synchronization primitive like `Arc<RwLock<InMemoryVectorStore>>`.
 
 ## Comparison with Other Vector Stores
-| Feature | In-Memory | MongoDB | Qdrant | LanceDB |
-|---------|-----------|---------|---------|----------|
-| Persistence | ❌ | ✅ | ✅ | ✅ |
-| Horizontal Scaling | ❌ | ✅ | ✅ | ❌ |
-| Setup Complexity | Low | Medium | Medium | Low |
-| Memory Usage | High | Low | Medium | Low |
-| Query Speed | Fast | Medium | Fast | Fast |
 
+| Feature            | In-Memory | MongoDB | Qdrant | LanceDB |
+| ------------------ | --------- | ------- | ------ | ------- |
+| Persistence        | ❌        | ✅      | ✅     | ✅      |
+| Horizontal Scaling | ❌        | ✅      | ✅     | ❌      |
+| Setup Complexity   | Low       | Medium  | Medium | Low     |
+| Memory Usage       | High      | Low     | Medium | Low     |
+| Query Speed        | Fast      | Medium  | Fast   | Fast    |
 
-<br/>
+<br />
 <Cards>
-<Cards.Card title="API Reference (docs.rs)" href="https://docs.rs/rig-core/latest/rig_core/vector_store/in_memory_store/index.html"/>
+  <Cards.Card
+    title="API Reference (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig_core/vector_store/in_memory_store/index.html"
+  />
 </Cards>

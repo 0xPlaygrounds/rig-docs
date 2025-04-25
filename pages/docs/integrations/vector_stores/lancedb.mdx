@@ -3,7 +3,7 @@ title: LanceDB
 description: This section describes the LanceDB integration.
 ---
 
-import { Cards } from 'nextra/components'
+import { Cards } from "nextra/components";
 
 # Rig-LanceDB Integration Overview
 
@@ -14,10 +14,10 @@ The `rig-lancedb` crate provides a vector store implementation using LanceDB, a 
 ## Key Features
 
 - **Columnar Storage**: Native support for Apache Arrow's columnar format
-- **Multiple Index Types**: 
+- **Multiple Index Types**:
   - IVF-PQ (Inverted File with Product Quantization)
   - Exact Nearest Neighbors (ENN)
-- **Flexible Deployment**: 
+- **Flexible Deployment**:
   - Local storage
   - Cloud storage (S3, GCP, Azure)
 - **Advanced Query Capabilities**: Supports both vector similarity search and metadata filtering
@@ -28,16 +28,13 @@ The `rig-lancedb` crate provides a vector store implementation using LanceDB, a 
 
 The core implementation revolves around the `LanceDbVectorIndex` struct:
 
-
-```34:44:rig-lancedb/src/lib.rs
+````34:44:rig-lancedb/src/lib.rs
 /// ```
-```
-
+````
 
 ### Schema Definition
 
 LanceDB requires a specific schema for storing embeddings:
-
 
 ```35:47:rig-lancedb/tests/fixtures/lib.rs
     Schema::new(Fields::from(vec![
@@ -55,10 +52,10 @@ LanceDB requires a specific schema for storing embeddings:
 }
 ```
 
-
 ### Search Parameters
 
 Configurable search parameters include:
+
 - Distance type (Cosine, L2)
 - Number of candidates
 - Query vector dimension validation
@@ -89,7 +86,6 @@ let results = vector_store
 
 ### 2. S3 Storage with IVF-PQ Index
 
-
 ```24:42:rig-lancedb/examples/vector_search_s3_ann.rs
     let model = openai_client.embedding_model(TEXT_EMBEDDING_ADA_002);
 
@@ -112,12 +108,11 @@ let results = vector_store
                 })
 ```
 
-
 ## LanceDB-Specific Features
 
 ### 1. Record Batch Processing
-LanceDB uses Arrow's RecordBatch for efficient data handling:
 
+LanceDB uses Arrow's RecordBatch for efficient data handling:
 
 ```19:31:rig-lancedb/src/utils/mod.rs
 }
@@ -135,10 +130,9 @@ impl QueryToJson for lancedb::query::VectorQuery {
         record_batches.deserialize()
 ```
 
-
 ### 2. Column Filtering
-Automatic filtering of embedding columns:
 
+Automatic filtering of embedding columns:
 
 ```33:46:rig-lancedb/src/utils/mod.rs
 }
@@ -157,10 +151,9 @@ impl FilterTableColumns for Arc<Schema> {
                     DataType::Float64 => None,
 ```
 
-
 ### 3. Automatic Deserialization
-Built-in support for converting Arrow types to Rust types:
 
+Built-in support for converting Arrow types to Rust types:
 
 ```1:45:rig-lancedb/src/utils/deserializer.rs
 use std::sync::Arc;
@@ -210,14 +203,15 @@ impl RecordBatchDeserializer for Vec<RecordBatch> {
 
 ```
 
-
 ## Best Practices
 
 1. **Index Creation**:
+
    - Minimum of 256 rows required for IVF-PQ indexing
    - Choose appropriate distance metrics based on your use case
 
 2. **Schema Design**:
+
    - Use appropriate data types for columns
    - Consider embedding dimension requirements
 
@@ -228,10 +222,12 @@ impl RecordBatchDeserializer for Vec<RecordBatch> {
 ## Limitations and Considerations
 
 1. **Data Size**:
+
    - Local storage is suitable for smaller datasets
    - Use cloud storage for large-scale deployments
 
 2. **Index Requirements**:
+
    - IVF-PQ index requires minimum dataset size
    - Consider memory requirements for large indices
 
@@ -242,7 +238,6 @@ impl RecordBatchDeserializer for Vec<RecordBatch> {
 ## Integration Example
 
 A complete example showing document embedding and search:
-
 
 ```13:73:rig-lancedb/examples/vector_search_local_ann.rs
 #[path = "./fixtures/lib.rs"]
@@ -267,11 +262,12 @@ async fn main() -> Result<(), anyhow::Error> {
             (0..256)
 ```
 
-
 For detailed API reference and additional features, see the [LanceDB documentation](https://lancedb.github.io/lancedb/) and Rig's API documentation.
 
-<br/>
+<br />
 <Cards>
-<Cards.Card title="API Reference (docs.rs)" href="https://docs.rs/rig-lancedb/latest/rig_lancedb/index.html"/>
+  <Cards.Card
+    title="API Reference (docs.rs)"
+    href="https://docs.rs/rig-lancedb/latest/rig_lancedb/index.html"
+  />
 </Cards>
-
