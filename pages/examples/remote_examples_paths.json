@@ -1,26 +1,26 @@
 {
-    "user": "0xPlaygrounds",
-    "repo": "rig-examples",
-    "branch": "master",
-    "docsPath": "pages/examples/",
-    "filePaths": [
-      "configs.mdx",
-      "custom-rules.mdx",
-      "getting-started.mdx",
-      "getting-started/parser-options.mdx",
-      "getting-started/parser.mdx",
-      "index.mdx"
-    ],
-    "nestedMeta": {
-      "index": "Introduction",
-      "getting-started": {
-        "type": "folder",
-        "items": {
-          "parser-options": "Parser Options",
-          "parser": "Parser"
-        }
-      },
-      "configs": "Configs",
-      "custom-rules": "Custom Rules"
-    }
+  "user": "0xPlaygrounds",
+  "repo": "rig-examples",
+  "branch": "master",
+  "docsPath": "pages/examples/",
+  "filePaths": [
+    "configs.mdx",
+    "custom-rules.mdx",
+    "getting-started.mdx",
+    "getting-started/parser-options.mdx",
+    "getting-started/parser.mdx",
+    "index.mdx"
+  ],
+  "nestedMeta": {
+    "index": "Introduction",
+    "getting-started": {
+      "type": "folder",
+      "items": {
+        "parser-options": "Parser Options",
+        "parser": "Parser"
+      }
+    },
+    "configs": "Configs",
+    "custom-rules": "Custom Rules"
   }
+}

@@ -3,34 +3,37 @@
 @tailwind utilities;
 
 .nextra-card > div {
-    padding: 0 1rem 1rem 1rem;
-    position: relative;
-    right: 0px;
-    order: 2;
+  padding: 0 1rem 1rem 1rem;
+  position: relative;
+  right: 0px;
+  order: 2;
 }
 
 #card {
-    display: flex; flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .section-title {
-    font-size: 2rem;
-    font-weight: 700;
+  font-size: 2rem;
+  font-weight: 700;
 }
 
 .section-surtitle {
-    font-size: 1.10rem;
-    font-weight: 700;
-    color: transparent;
-    background-image: linear-gradient(85.52deg, rgba(3, 205, 244) -7.27%, rgb(79, 138, 254) 108.87%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    position: relative;
-    top: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: transparent;
+  background-image: linear-gradient(
+    85.52deg,
+    rgba(3, 205, 244) -7.27%,
+    rgb(79, 138, 254) 108.87%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+  top: 0.5rem;
 }
-
-
 
 /* Subsequent details should have less of a gap */
 details + details {
@@ -46,4 +49,3 @@ details > div {
 details > summary {
   font-weight: 700;
 }
-

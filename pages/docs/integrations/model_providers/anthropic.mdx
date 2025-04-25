@@ -1,0 +1,173 @@
+---
+title: Anthropic
+description: Integration with Anthropic's Claude models, supporting completion models with advanced features like tool usage and prompt caching.
+---
+
+import { Cards } from "nextra/components";
+
+# Anthropic Integration
+
+The Anthropic provider in Rig offers integration with Anthropic's Claude models, supporting completion models with advanced features like tool usage and prompt caching.
+
+## Key Features
+
+- Support for Claude 3 model family (Opus, Sonnet, Haiku)
+- Version-specific API controls
+- Beta features support through headers
+- Prompt caching capabilities
+- Tool/function calling support
+- Detailed token usage tracking
+
+## Basic Usage
+
+```rust
+use rig::providers::anthropic::{ClientBuilder, CLAUDE_3_SONNET};
+
+// Create client with specific version and beta features
+let client = ClientBuilder::new("your-api-key")
+    .anthropic_version("2023-06-01")
+    .anthropic_beta("prompt-caching-2024-07-31")
+    .build();
+
+// Create a completion model
+let claude = client.completion_model(CLAUDE_3_SONNET);
+
+// Or create an agent directly
+let agent = client
+    .agent(CLAUDE_3_SONNET)
+    .preamble("You are a helpful assistant")
+    .build();
+```
+
+## Available Models
+
+### Completion Models
+
+- `CLAUDE_3_OPUS`: Most capable model
+- `CLAUDE_3_SONNET`: Balanced performance and speed
+- `CLAUDE_3_HAIKU`: Fastest, most efficient model
+- `CLAUDE_3_5_SONNET`: Latest Sonnet version
+
+## Special Considerations
+
+1. **API Versioning**: Anthropic requires explicit version specification:
+
+```rust filename="rig-core/src/providers/anthropic/completion.rs [29:32]"
+
+pub const ANTHROPIC_VERSION_2023_01_01: &str = "2023-01-01";
+pub const ANTHROPIC_VERSION_2023_06_01: &str = "2023-06-01";
+pub const ANTHROPIC_VERSION_LATEST: &str = ANTHROPIC_VERSION_2023_06_01;
+```
+
+2. **Token Requirements**: Unlike other providers, Anthropic requires `max_tokens` to be set:
+
+```rust filename="rig-core/src/providers/anthropic/completion.rs [176:182]"
+
+        let prompt_with_context = completion_request.prompt_with_context();
+
+        // Check if max_tokens is set, required for Anthropic
+        if completion_request.max_tokens.is_none() {
+            return Err(CompletionError::RequestError(
+                "max_tokens must be set for Anthropic".into(),
+```
+
+3. **Response Format**: Anthropic responses include detailed token usage information including cache statistics:
+
+```rust filename="rig-core/src/providers/anthropic/completion.rs [63:69]"
+    pub input_tokens: u64,
+    pub cache_read_input_tokens: Option<u64>,
+    pub cache_creation_input_tokens: Option<u64>,
+    pub output_tokens: u64,
+}
+
+impl std::fmt::Display for Usage {
+```
+
+4. **Content Types**: Anthropic supports multiple content types in responses:
+
+```rust filename="rig-core/src/providers/anthropic/completion.rs [43:58]"
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum Content {
+    String(String),
+    Text {
+        r#type: String,
+        text: String,
+    },
+    ToolUse {
+        r#type: String,
+        id: String,
+        name: String,
+        input: serde_json::Value,
+    },
+```
+
+## Implementation Details
+
+The Anthropic provider is implemented across three main components:
+
+1. **Client Builder**: Provides a flexible way to configure API settings:
+
+````rust filename="rig-core/src/providers/anthropic/client.rs [13:73]"
+const ANTHROPIC_API_BASE_URL: &str = "https://api.anthropic.com";
+
+#[derive(Clone)]
+pub struct ClientBuilder<'a> {
+    api_key: &'a str,
+    base_url: &'a str,
+    anthropic_version: &'a str,
+    anthropic_betas: Option<Vec<&'a str>>,
+}
+
+/// Create a new anthropic client using the builder
+///
+/// # Example
+/// ```
+/// use rig::providers::anthropic::{ClientBuilder, self};
+///
+/// // Initialize the Anthropic client
+/// let anthropic_client = ClientBuilder::new("your-claude-api-key")
+///    .anthropic_version(ANTHROPIC_VERSION_LATEST)
+///    .anthropic_beta("prompt-caching-2024-07-31")
+///    .build()
+/// ```
+impl<'a> ClientBuilder<'a> {
+    pub fn new(api_key: &'a str) -> Self {
+        Self {
+            api_key,
+````
+
+2. **Completion Model**: Handles request/response formatting and error handling:
+
+```rust filename="rig-core/src/providers/anthropic/completion.rs [137:142]"
+
+#[derive(Clone)]
+pub struct CompletionModel {
+    client: Client,
+    pub model: String,
+}
+```
+
+3. **Tool Integration**: Supports function calling with specific Anthropic formatting:
+
+```rust filename="rig-core/src/providers/anthropic/completion.rs [86:91]"
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ToolDefinition {
+    pub name: String,
+    pub description: Option<String>,
+```
+
+For detailed API reference and additional features, see the Anthropic API documentation and Rig's API documentation.
+
+<br />
+
+<Cards>
+  <Cards.Card
+    title="API Reference (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/anthropic/index.html"
+  />
+</Cards>

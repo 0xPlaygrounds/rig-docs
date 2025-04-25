@@ -1,7 +1,9 @@
-export default {
-    "index": "Get Started",
-    "0_model_providers": "Model Providers",
-    "1_rag": "RAG",
-    "2_basics": "Basic",
-    "3_advanced": "Advanced"
-}
+const meta = {
+  index: "Get Started",
+  model_providers: "Model Providers",
+  rag: "RAG",
+  basics: "Basic",
+  advanced: "Advanced",
+};
+
+export default meta;

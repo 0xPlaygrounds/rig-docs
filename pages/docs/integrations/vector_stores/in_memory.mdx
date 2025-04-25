@@ -1,0 +1,282 @@
+---
+title: In-Memory Vector Store
+description: This section describes the in-memory vector store integration.
+---
+
+import { Cards } from "nextra/components";
+
+# In-Memory Vector Store
+
+## Overview
+
+The in-memory vector store is Rig's default vector store implementation, included in `rig-core`. It provides a lightweight, RAM-based solution for vector similarity search, ideal for development, testing, and small-scale applications.
+
+## Key Features
+
+- Zero external dependencies
+- Automatic or custom document ID generation
+- Multiple embedding support per document
+- Cosine similarity search
+- Flexible document schema support
+
+## Implementation Details
+
+### Core Components
+
+1. **Store Structure**:
+
+The `InMemoryVectorStore` uses a simple but effective data structure:
+
+```rust
+pub struct InMemoryVectorStore<D: Serialize> {
+    embeddings: HashMap<String, (D, OneOrMany<Embedding>)>,
+}
+```
+
+Key components:
+
+- **Key**: String identifier for each document
+- **Value**: Tuple containing:
+  - `D`: The serializable document
+  - `OneOrMany<Embedding>`: Either a single embedding or multiple embeddings
+
+The store supports multiple embeddings per document through the `OneOrMany` enum:
+
+```rust
+pub enum OneOrMany<T> {
+    One(T),
+    Many(Vec<T>),
+}
+```
+
+When searching, the store:
+
+1. Computes cosine similarity between the query and all document embeddings
+2. For documents with multiple embeddings, uses the best-matching embedding
+3. Uses a `BinaryHeap` to efficiently maintain the top-N results
+4. Returns results sorted by similarity score
+
+Memory layout example:
+
+```plaintext
+{
+    "doc1" => (
+        Document { title: "Example 1", ... },
+        One(Embedding { vec: [0.1, 0.2, ...] })
+    ),
+    "doc2" => (
+        Document { title: "Example 2", ... },
+        Many([
+            Embedding { vec: [0.3, 0.4, ...] },
+            Embedding { vec: [0.5, 0.6, ...] }
+        ])
+    )
+}
+```
+
+2. **Vector Search Implementation**:
+
+- Uses a binary heap for efficient top-N retrieval
+- Maintains scores using ordered floating-point comparisons
+- Supports multiple embeddings per document with best-match selection
+
+### Document Management
+
+Three ways to add documents:
+
+1. **Auto-generated IDs**:
+
+```rust
+let store = InMemoryVectorStore::from_documents(vec![
+    (doc1, embedding1),
+    (doc2, embedding2)
+]);
+```
+
+2. **Custom IDs**:
+
+```rust
+let store = InMemoryVectorStore::from_documents_with_ids(vec![
+    ("custom_id_1", doc1, embedding1),
+    ("custom_id_2", doc2, embedding2)
+]);
+```
+
+3. **Function-generated IDs**:
+
+```rust
+let store = InMemoryVectorStore::from_documents_with_id_f(
+    documents,
+    |doc| format!("doc_{}", doc.title)
+);
+```
+
+## Special Considerations
+
+### 1. Memory Usage
+
+- All embeddings and documents are stored in RAM
+- Memory usage scales linearly with document count and embedding dimensions
+- Consider available memory when storing large datasets
+
+### 2. Performance Characteristics
+
+- Fast lookups using HashMap for document retrieval
+- Efficient top-N selection using BinaryHeap
+- O(n) complexity for vector similarity search
+- Best for small to medium-sized datasets
+
+### 3. Document Storage
+
+- Documents must be serializable
+- Supports multiple embeddings per document
+- Automatic pruning of large arrays (>400 elements)
+
+## Usage Example
+
+```rust
+use rig::providers::openai;
+use rig::embeddings::EmbeddingsBuilder;
+use rig::vector_store::in_memory_store::InMemoryVectorStore;
+
+#[tokio::main]
+async fn main() -> Result<(), anyhow::Error> {
+    // Initialize store
+    let mut store = InMemoryVectorStore::default();
+
+    // Create embeddings
+    let embeddings = EmbeddingsBuilder::new(model)
+        .simple_document("doc1", "First document content")
+        .simple_document("doc2", "Second document content")
+        .build()
+        .await?;
+
+    // Add documents to store
+    store.add_documents(embeddings);
+
+    // Create vector store index
+    let index = store.index(model);
+
+    // Search similar documents
+    let results = store
+        .top_n::<Document>("search query", 5)
+        .await?;
+
+    Ok(())
+}
+```
+
+## Implementation Specifics
+
+### Vector Search Algorithm
+
+The core search implementation:
+
+```rust filename=rig-core/src/vector_store/in_memory_store.rs [67:103]
+
+    /// Implement vector search on [InMemoryVectorStore].
+    /// To be used by implementations of [VectorStoreIndex::top_n] and [VectorStoreIndex::top_n_ids] methods.
+    fn vector_search(&self, prompt_embedding: &Embedding, n: usize) -> EmbeddingRanking<D> {
+        // Sort documents by best embedding distance
+        let mut docs = BinaryHeap::new();
+
+        for (id, (doc, embeddings)) in self.embeddings.iter() {
+            // Get the best context for the document given the prompt
+            if let Some((distance, embed_doc)) = embeddings
+                .iter()
+                .map(|embedding| {
+                    (
+                        OrderedFloat(embedding.cosine_similarity(prompt_embedding, false)),
+                        &embedding.document,
+                    )
+                })
+                .max_by(|a, b| a.0.cmp(&b.0))
+            {
+                docs.push(Reverse(RankingItem(distance, id, doc, embed_doc)));
+            };
+
+```
+
+### Error Handling
+
+The vector store operations can produce several error types:
+
+- `EmbeddingError`: Issues with embedding generation
+- `JsonError`: Document serialization/deserialization errors
+- `DatastoreError`: General storage operations errors
+- `MissingIdError`: When a requested document ID doesn't exist
+
+Example error handling:
+
+```rust
+match store.get_document::<MyDoc>("doc1") {
+    Ok(Some(doc)) => println!("Found document: {:?}", doc),
+    Ok(None) => println!("Document not found"),
+    Err(VectorStoreError::JsonError(e)) => println!("Failed to deserialize: {}", e),
+    Err(e) => println!("Other error: {}", e),
+}
+```
+
+## Best Practices
+
+1. **Memory Management**:
+
+   - Monitor memory usage with large datasets
+   - Consider chunking large document additions
+   - Use cloud-based vector stores for production deployments
+
+2. **Document Structure**:
+
+   - Keep documents serializable
+   - Avoid extremely large arrays
+   - Consider using custom ID generation for meaningful identifiers
+
+3. **Performance Optimization**:
+   - Pre-allocate store capacity when possible
+   - Batch document additions
+   - Use appropriate embedding dimensions
+
+## Limitations
+
+1. **Scalability**:
+
+   - Limited by available RAM
+   - No persistence between program runs
+   - Single-machine only
+
+2. **Features**:
+
+   - No built-in indexing optimizations
+   - No metadata filtering
+   - No automatic persistence
+
+3. **Production Use**:
+   - Best suited for development/testing
+   - Consider cloud-based alternatives for production
+   - No built-in backup/recovery mechanisms
+
+For production deployments, consider using one of Rig's other vector store integrations (MongoDB, LanceDB, Neo4j, or Qdrant) which offer persistence and better scalability.
+
+## Thread Safety
+
+The `InMemoryVectorStore` is thread-safe for concurrent reads but requires exclusive access for writes. The store implements `Clone` for creating independent instances and `Send + Sync` for safe concurrent access across thread boundaries.
+
+For concurrent write access, consider wrapping the store in a synchronization primitive like `Arc<RwLock<InMemoryVectorStore>>`.
+
+## Comparison with Other Vector Stores
+
+| Feature            | In-Memory | MongoDB | Qdrant | LanceDB |
+| ------------------ | --------- | ------- | ------ | ------- |
+| Persistence        | ❌        | ✅      | ✅     | ✅      |
+| Horizontal Scaling | ❌        | ✅      | ✅     | ❌      |
+| Setup Complexity   | Low       | Medium  | Medium | Low     |
+| Memory Usage       | High      | Low     | Medium | Low     |
+| Query Speed        | Fast      | Medium  | Fast   | Fast    |
+
+<br />
+<Cards>
+  <Cards.Card
+    title="API Reference (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig_core/vector_store/in_memory_store/index.html"
+  />
+</Cards>

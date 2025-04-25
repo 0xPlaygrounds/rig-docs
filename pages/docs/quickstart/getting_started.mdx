@@ -1,0 +1,43 @@
+---
+title: Basic Usage
+description: This section contains the quickstart guide for Rig.
+---
+## Pre-requisites
+Before installing `rig`, make sure you have the Rust programming language installed! [Install Rust here.](https://www.rust-lang.org/tools/install)
+
+## Installing Rig
+To install `rig`, you can do so with the following command in a Rust project (in your terminal):
+
+```bash
+cargo add rig-core tokio
+```
+
+This will add the `rig-core` dependency in your Rust project, as well as Tokio which is an asynchronous Rust runtime which you will need to use `rig`.
+
+## Basic Usage
+Below is a simple example of how you can use `rig` to prompt OpenAI's GPT-4 model:
+
+```rust
+use rig::{completion::Prompt, providers::openai};
+
+#[tokio::main]
+async fn main() {
+    // Create OpenAI client and model
+    // This requires the `OPENAI_API_KEY` environment variable to be set.
+    let openai_client = openai::Client::from_env();
+
+    let gpt4 = openai_client.agent("gpt-4").build();
+
+    // Prompt the model and print its response
+    let response = gpt4
+        .prompt("Who are you?")
+        .await
+        .expect("Failed to prompt GPT-4");
+
+    println!("GPT-4: {response}");
+}
+```
+
+To run this, you will need an OpenAI API key as an environment variable (`OPENAI_API_KEY`). Then simply use `cargo run` and you'll see your response!
+
+Interested in using other providers like DeepSeek or Claude? Check out [our list of providers that we support.](/docs/5_integrations/40_model_providers)

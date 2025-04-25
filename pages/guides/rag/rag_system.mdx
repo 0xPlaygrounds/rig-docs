@@ -1,0 +1,328 @@
+# Building a RAG System with Rig in Under 100 Lines of Code
+
+**TL;DR:** This guide walks you through building a simple Retrieval-Augmented Generation (RAG) system in Rust using the Rig library. In under 100 lines of code, you'll create a system that extracts text from PDF documents, generates embeddings with OpenAI's API, and allows a large language model to answer questions based on the documents' content.
+
+Retrieval-Augmented Generation (RAG) is a powerful technique that enhances Large Language Models (LLMs) by combining them with external knowledge retrieval. In a RAG system, when a query is received, relevant information is first retrieved from a knowledge base, then provided to the LLM along with the query. This allows the model to generate responses that are both contextually relevant and up-to-date, overcoming some of the limitations of traditional LLMs such as outdated knowledge or hallucinations.
+
+[Learn more about the fundamentals of RAG here.](https://www.promptingguide.ai/research/rag)
+
+Rig is an open-source Rust library designed to simplify the development of LLM-powered applications, including RAG systems. In this guide, we'll walk through the process of building a functional RAG system using Rig in under 100 lines of code. Our system will be capable of answering questions based on the content of PDF documents, showcasing how RAG can be applied to real-world data sources. Let's dive in and start building!
+
+> 💡 **Tip**: New to Rust?
+>
+> This guide assumes some familiarity with Rust and a set-up coding environment. If you're just starting out or need to set up your environment, check out these quick guides:
+>
+> - [Introduction to Rust](https://www.rust-lang.org/learn)
+> - [Setting up Rust with VS Code](https://users.rust-lang.org/t/setting-up-rust-with-vs-code/76907)
+>
+> These resources will help you get up to speed quickly!
+
+## Setting Up the Project
+
+Before we start coding, let's set up our Rust project and install the necessary dependencies.
+
+First, create a new Rust project in your coding environment:
+
+```bash
+cargo new rag_system
+cd rag_system
+```
+
+Now, let's add Rig and other required dependencies to our `Cargo.toml` file:
+
+```toml
+[package]
+name = "rag_system"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rig-core = "0.0.6"
+tokio = { version = "1.34.0", features = ["full"] }
+anyhow = "1.0.75"
+pdf-extract = "0.7.3"
+```
+
+Here's a brief explanation of each dependency:
+
+- `rig-core`: The main Rig library for building LLM applications
+- `tokio`: An asynchronous runtime for Rust
+- `anyhow`: For flexible error handling
+- `pdf-extract`: To extract text from PDF files
+
+Before we begin coding, make sure you have an OpenAI API key. Set it as an environment variable:
+
+```bash
+export OPENAI_API_KEY=your_api_key_here
+```
+
+With our project set up, let's move on to building our RAG system step by step.
+
+## Building the RAG System
+
+We'll break down our RAG system into several key components. Let's go through each one, explaining its purpose and implementation.
+
+### Step 1: Setting up the OpenAI client and PDF extraction
+
+First, we'll set up the OpenAI client using Rig and create a function to extract text from PDFs:
+
+```rust
+use rig::providers::openai;
+use std::path::Path;
+use anyhow::{Result, Context};
+use pdf_extract::extract_text;
+
+// Function to load and extract text from a PDF file
+fn load_pdf_content<P: AsRef<Path>>(file_path: P) -> Result<String> {
+    extract_text(file_path.as_ref())
+        .with_context(|| format!("Failed to extract text from PDF: {:?}", file_path.as_ref()))
+}
+
+// In your main function:
+let openai_client = openai::Client::from_env();
+```
+
+This code sets up our OpenAI client and defines a function to extract text from PDFs. The `load_pdf_content` function uses `pdf_extract` to read the content of a PDF file and returns it as a string. We use `anyhow` for error handling, which allows us to add context to any errors that occur during PDF extraction.
+
+### Step 2: Creating the document store
+
+Next, we'll create an in-memory vector store to hold our documents:
+
+```rust
+use rig::vector_store::in_memory_store::InMemoryVectorStore;
+use rig::vector_store::VectorStore;
+
+let mut vector_store = InMemoryVectorStore::default();
+```
+
+The `InMemoryVectorStore` is a simple vector store provided by Rig that keeps all data in memory. This is suitable for small to medium-sized document collections. For larger collections, you might want to use a persistent storage solution.
+
+### Step 3: Implementing the embedding model
+
+Now comes the crucial part where we set up our embedding model and add documents from PDFs to our store:
+
+```rust
+use rig::embeddings::EmbeddingsBuilder;
+use std::env;
+
+// Create an embedding model using OpenAI's text-embedding-ada-002
+let embedding_model = openai_client.embedding_model("text-embedding-ada-002");
+
+// Get the current directory and construct paths to PDF files
+let current_dir = env::current_dir()?;
+let documents_dir = current_dir.join("documents");
+
+let pdf1_path = documents_dir.join("Moores_Law_for_Everything.pdf");
+let pdf2_path = documents_dir.join("The_Last_Question.pdf");
+
+// Load PDF documents
+let pdf1_content = load_pdf_content(&pdf1_path)?;
+let pdf2_content = load_pdf_content(&pdf2_path)?;
+
+// Create embeddings for the PDF contents
+let embeddings = EmbeddingsBuilder::new(embedding_model.clone())
+    .simple_document("Moores_Law_for_Everything", &pdf1_content)
+    .simple_document("The_Last_Question", &pdf2_content)
+    .build()
+    .await?;
+
+// Add the embeddings to our vector store
+vector_store.add_documents(embeddings).await?;
+```
+
+This section is where the magic happens. We're using OpenAI's `text-embedding-ada-002` model to create embeddings for our PDF documents. These embeddings are vector representations of the text that capture semantic meaning, allowing for efficient similarity searches later.
+
+We load the content of two PDF files, create embeddings for them using the `EmbeddingsBuilder`, and then add these embeddings to our vector store. This process transforms our raw text data into a format that can be quickly and effectively queried.
+
+### Step 4: Building the RAG agent
+
+With our document store populated, we can now create our RAG agent:
+
+```rust
+let rag_agent = openai_client.context_rag_agent("gpt-3.5-turbo")
+    .preamble("You are a helpful assistant that answers questions based on the given context from PDF documents.")
+    .dynamic_context(2, vector_store.index(embedding_model))
+    .build();
+```
+
+This code creates a RAG agent using OpenAI's GPT-3.5-turbo model. The `preamble` sets the behavior of our agent, and `dynamic_context(2, ...)` tells the agent to use the top 2 most relevant documents from our vector store for each query. The `vector_store.index(embedding_model)` creates an index of our vector store using our embedding model, which allows for efficient similarity searches.
+
+### Step 5: Using Rig's Built-in CLI Interface
+
+One of the great features of Rig is its built-in utilities that simplify common tasks. Instead of creating our own CLI interface from scratch, we can use Rig's `cli_chatbot` function:
+
+```rust
+use rig::cli_chatbot::cli_chatbot;
+
+// Create RAG agent
+let rag_agent = openai_client.context_rag_agent("gpt-3.5-turbo")
+    .preamble("You are a helpful assistant that answers questions based on the given context from PDF documents.")
+    .dynamic_context(2, vector_store.index(embedding_model))
+    .build();
+
+// Use the cli_chatbot function to create the CLI interface
+cli_chatbot(rag_agent).await?;
+```
+
+This simple change not only reduces our code but also provides a more robust CLI interface with built-in chat history functionality.
+
+## Putting It All Together
+
+Now that we've gone through each component, let's look at the complete code for our RAG system:
+
+```rust
+use rig::providers::openai;
+use rig::vector_store::in_memory_store::InMemoryVectorStore;
+use rig::vector_store::VectorStore;
+use rig::embeddings::EmbeddingsBuilder;
+use rig::cli_chatbot::cli_chatbot;  // Import the cli_chatbot function
+use std::path::Path;
+use anyhow::{Result, Context};
+use pdf_extract::extract_text;
+
+fn load_pdf_content<P: AsRef<Path>>(file_path: P) -> Result<String> {
+    extract_text(file_path.as_ref())
+        .with_context(|| format!("Failed to extract text from PDF: {:?}", file_path.as_ref()))
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    // Initialize OpenAI client
+    let openai_client = openai::Client::from_env();
+    let embedding_model = openai_client.embedding_model("text-embedding-ada-002");
+
+    // Create vector store
+    let mut vector_store = InMemoryVectorStore::default();
+
+    // Get the current directory and construct paths to PDF files
+    let current_dir = std::env::current_dir()?;
+    let documents_dir = current_dir.join("documents");
+
+    let pdf1_path = documents_dir.join("Moores_Law_for_Everything.pdf");
+    let pdf2_path = documents_dir.join("The_Last_Question.pdf");
+
+    // Load PDF documents
+    let pdf1_content = load_pdf_content(&pdf1_path)?;
+    let pdf2_content = load_pdf_content(&pdf2_path)?;
+
+    // Create embeddings and add to vector store
+    let embeddings = EmbeddingsBuilder::new(embedding_model.clone())
+        .simple_document("Moores_Law_for_Everything", &pdf1_content)
+        .simple_document("The_Last_Question", &pdf2_content)
+        .build()
+        .await?;
+
+    vector_store.add_documents(embeddings).await?;
+
+    // Create RAG agent
+    let rag_agent = openai_client.context_rag_agent("gpt-3.5-turbo")
+        .preamble("You are a helpful assistant that answers questions based on the given context from PDF documents.")
+        .dynamic_context(2, vector_store.index(embedding_model))
+        .build();
+
+    // Use the cli_chatbot function to create the CLI interface
+    cli_chatbot(rag_agent).await?;
+
+    Ok(())
+}
+```
+
+That's it! we've built a functional RAG system in less than 100 lines of Rust code. It handles PDF extraction, embedding creation, vector storage, and interaction with OpenAI's GPT model, all while leveraging Rig's built-in CLI interface for a smooth user experience.
+
+## Running and Testing the RAG System
+
+To run the system, ensure you have the PDF files ("Moores_Law_for_Everything.pdf" and "The_Last_Question.pdf") in a `documents` folder in your project root. Then use the following command:
+
+```bash
+cargo run
+```
+
+Once the system is up and running, you can start interacting with it. Let's explore some example interactions to see how our RAG system performs with different types of queries.
+
+## Example Interactions with the RAG System
+
+Here's an example interaction with the RAG system:
+
+```plaintext
+Welcome to the chatbot! Type 'exit' to quit.
+> hi
+========================== Response ============================
+Hello! How can I assist you today?
+================================================================
+
+
+> give me a summary of what sam altman wrote
+========================== Response ============================
+Sam Altman discusses the imminent socioeconomic changes brought about by rapidly advancing artificial intelligence (AI) technology. He explains that as AI becomes more capable of performing various tasks currently done by humans, there will be a significant shift in the distribution of wealth from labor to capital. Altman emphasizes the need for public policy to adapt to this technological future to ensure a fair distribution of wealth and enable everyone to benefit from it. He proposes a system that taxes assets such as companies and land to distribute wealth more equitably in society. Altman envisions a future where AI revolutionizes various industries, leading to an abundance of wealth that can be shared among citizens through innovative policies. He suggests that by taking advantage of technological advancements and implementing fair policies, society can improve living standards for everyone.
+================================================================
+
+
+> tell me about the story by asimov
+========================== Response ============================
+Isaac Asimov's story "The Last Question" explores the theme of entropy and the eventual heat death of the universe. The story spans billions of years and follows humanity's interactions with a supercomputer known as the Multivac and later the Cosmic AC. As the stars and galaxies gradually fade away, humanity faces the inevitability of the universe's decay due to the second law of thermodynamics. Despite their technological advancements and seemingly limitless energy sources, the characters in the story grapple with fundamental questions about the fate of the universe and the concept of reversing entropy. In the end, the story reveals a thought-provoking conclusion about the relationship between humanity, technology, and the ultimate destiny of the cosmos.
+================================================================
+
+
+> how does the ideas of both texts relate to eachother?
+========================== Response ============================
+Both texts, "Moore's Law for Everything" by Sam Altman and "The Last Question" by Isaac Asimov, touch upon the theme of technological advancement and its potential implications for society and the universe.
+
+In "Moore's Law for Everything," Altman discusses the exponential growth of AI technology and its expected impact on society, including the redistribution of wealth from labor to capital. Altman highlights the need for policy adaptation to ensure a fair distribution of the wealth generated by AI advancements. He envisions a future where AI revolutionizes various industries and creates abundant wealth that can be shared among all citizens through innovative policies.
+
+On the other hand, "The Last Question" delves into the concept of entropy and the gradual heat death of the universe as explored through interactions with advanced supercomputers. The story contemplates the limitations of technology and humanity's quest to reverse entropy and preserve the universe's existence.
+
+Both texts address the transformative power of technology, raising questions about the long-term implications and ethical considerations surrounding technological progress. They explore themes of societal adaptation, resource management, and the inevitability of change in the face of advancing technology and cosmic forces.
+================================================================
+
+
+```
+
+Let's break down what we're looking at:
+
+1. **Greeting and Open-ended Interaction**: The agent can engage in general conversation, as shown by its response to "hi".
+
+2. **Specific Document Summary**: The agent provides a concise summary of Sam Altman's ideas from "Moore's Law for Everything" when asked.
+
+3. **Theme Analysis**: When asked about Asimov's "The Last Question", the agent demonstrates its ability to analyze and explain the central themes of a literary work.
+
+4. **Cross-Document Analysis**: The final question showcases the agent's ability to draw connections between two different texts, comparing and contrasting their themes and ideas.
+
+This is RAG in action, and it's made possible by the combination of:
+
+- The vector store, which allows for efficient retrieval of relevant information
+- The embedding model, which captures the semantic meaning of the text
+- The large language model (GPT-3.5-turbo in this case), which generates coherent and contextually relevant responses
+- Rig's built-in CLI interface, which provides a smooth user experience with chat history functionality
+
+By leveraging these components through Rig's intuitive API, we've created a system that can understand and respond to complex, multi-faceted questions across multiple documents, all while providing a user-friendly interface.
+
+## Potential Applications
+
+Seeing these examples, you might start to imagine the potential applications of such a system:
+
+1. **Research Assistant**: Help researchers quickly find and synthesize information across multiple papers or documents.
+2. **Educational Tool**: Assist students in understanding complex topics by providing explanations and drawing connections between different concepts.
+3. **Content Analysis**: Aid writers or journalists in analyzing themes and ideas across multiple texts.
+4. **Customer Support**: Provide detailed, context-aware responses to customer inquiries based on product documentation.
+
+The possibilities are vast, and with Rig, implementing these applications becomes much more accessible.
+
+## Deploying to Production
+
+While our current implementation is suitable for local testing and small-scale use, there are several considerations to keep in mind when deploying such a system to production:
+
+1. **Scalability**: For larger document collections, consider using a dedicated vector store instead of the in-memory store. Rig currently supports MongoDB with other Vector stores in the roadmap. If you want to implement a specific vector store or have a request for one, please visit the [Rig Repo](https://github.com/0xPlaygrounds/rig) and submit an issue.
+
+2. **Document Processing**: Implement more robust PDF parsing, including error handling for corrupted files and support for other document formats. You might want to use a dedicated document processing pipeline.
+
+3. **Caching**: Implement response caching to reduce API calls and improve response times for repeated queries. This can significantly reduce costs and latency.
+
+4. **Security**: Ensure proper handling of API keys and sensitive information, especially if processing confidential documents. Use environment variables and secure vaults for storing secrets.
+
+5. **Monitoring and Logging**: Implement comprehensive logging and monitoring to track system performance and user interactions. This will help in debugging and improving the system over time.
+
+6. **Rate Limiting**: Implement rate limiting to manage API usage and prevent abuse. This is crucial both for cost management and to comply with API provider terms of service.
+
+7. **Asynchronous Processing**: For handling large documents or many concurrent users, consider implementing asynchronous processing with a job queue.
+
+By addressing these considerations, you can turn this proof-of-concept into a robust, production-ready system. In a future guide, i'll walk you through deploying a RAG system built with Rig to production, subscribe to my blog or join our community to be notified.

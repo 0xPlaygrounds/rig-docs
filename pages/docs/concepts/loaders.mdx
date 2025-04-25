@@ -1,0 +1,196 @@
+---
+title: Loaders
+description: This section contains the concepts for Rig.
+---
+
+import { Cards } from "nextra/components";
+
+# Rig Loaders: File Loading and Processing
+
+Rig's loader system provides utilities for loading and preprocessing various file types, with a focus on structured data ingestion for LLM applications. The system is designed to be extensible and error-tolerant, with built-in support for common file types.
+
+## Core Components
+
+### FileLoader
+
+The base loader for handling generic files with features for:
+
+- Glob pattern matching
+- Directory traversal
+- Error handling
+- Content preprocessing
+
+```rust
+use rig::loaders::FileLoader;
+
+// Load all Rust files in examples directory
+let examples = FileLoader::with_glob("examples/*.rs")?
+    .read_with_path()
+    .ignore_errors()
+    .into_iter();
+```
+
+### PDF Loader (Optional)
+
+Specialized loader for PDF documents with additional capabilities:
+
+- Page-by-page extraction
+- Metadata handling
+- PDF-specific error handling
+
+```rust
+use rig::loaders::PdfFileLoader;
+
+let documents = PdfFileLoader::with_glob("docs/*.pdf")?
+    .load_with_path()
+    .ignore_errors()
+    .by_page()
+    .into_iter();
+```
+
+## Key Features
+
+### 1. Error Handling
+
+The loaders provide robust error handling through custom error types:
+
+```rust
+pub enum FileLoaderError {
+    InvalidGlobPattern(String),
+    IoError(std::io::Error),
+    PatternError(glob::PatternError),
+    GlobError(glob::GlobError),
+}
+```
+
+### 2. Flexible Loading Patterns
+
+Multiple ways to specify input sources:
+
+```rust
+// Using glob patterns
+let glob_loader = FileLoader::with_glob("**/*.txt")?;
+
+// Using directory
+let dir_loader = FileLoader::with_dir("data/")?;
+```
+
+### 3. Content Processing
+
+Built-in methods for common processing tasks:
+
+```rust
+let processed_files = FileLoader::with_glob("*.txt")?
+    .read()                // Read contents
+    .ignore_errors()       // Skip failed reads
+    .into_iter()
+    .collect::<Vec<_>>();
+```
+
+## Integration with Rig
+
+### Agent Context Loading
+
+Reference:
+
+```rust filename="rig-core/examples/agent_with_loaders.rs [17:28]"
+    // Load in all the rust examples
+    let examples = FileLoader::with_glob("rig-core/examples/*.rs")?
+        .read_with_path()
+        .ignore_errors()
+        .into_iter();
+
+    // Create an agent with multiple context documents
+    let agent = examples
+        .fold(AgentBuilder::new(model), |builder, (path, content)| {
+            builder.context(format!("Rust Example {:?}:\n{}", path, content).as_str())
+        })
+        .build();
+```
+
+### PDF Document Processing
+
+Reference:
+
+```rust filename="rig-core/src/loaders/pdf.rs [31:45]"
+    fn load(self) -> Result<Document, PdfLoaderError> {
+        Document::load(self).map_err(PdfLoaderError::PdfError)
+    }
+    fn load_with_path(self) -> Result<(PathBuf, Document), PdfLoaderError> {
+        let contents = Document::load(&self);
+        Ok((self, contents?))
+    }
+}
+impl<T: Loadable> Loadable for Result<T, PdfLoaderError> {
+    fn load(self) -> Result<Document, PdfLoaderError> {
+        self.map(|t| t.load())?
+    }
+    fn load_with_path(self) -> Result<(PathBuf, Document), PdfLoaderError> {
+        self.map(|t| t.load_with_path())?
+    }
+```
+
+## Best Practices
+
+1. **Error Handling**
+
+   - Use `ignore_errors()` for fault-tolerant processing
+   - Handle specific error types when needed
+   - Log errors appropriately
+
+2. **Resource Management**
+
+   - Process files in batches
+   - Consider memory usage with large files
+   - Clean up temporary resources
+
+3. **Content Processing**
+   - Preprocess content before LLM ingestion
+   - Maintain file metadata when relevant
+   - Use appropriate loader for file type
+
+## Common Patterns
+
+### Basic File Loading
+
+```rust
+let loader = FileLoader::with_glob("data/*.txt")?;
+for content in loader.read().ignore_errors() {
+    // Process content
+}
+```
+
+### PDF Processing
+
+```rust
+let pdf_loader = PdfFileLoader::with_glob("docs/*.pdf")?;
+let pages = pdf_loader
+    .load_with_path()
+    .ignore_errors()
+    .by_page()
+    .into_iter();
+```
+
+### Directory Processing
+
+```rust
+let dir_loader = FileLoader::with_dir("data/")?
+    .read_with_path()
+    .ignore_errors();
+
+for (path, content) in dir_loader {
+    // Process files with path context
+}
+```
+
+## See Also
+- [Agent System](./agent.mdx)
+- [Vector Store Integration](../integrations/vector_stores.mdx)
+
+<br />
+
+<Cards.Card
+  title="API Reference (Loaders)"
+  href="https://docs.rs/rig-core/latest/rig/loaders/index.html"
+  arrow
+/>

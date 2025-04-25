@@ -1,0 +1,190 @@
+---
+title: Tools
+description: This section contains the concepts for Rig.
+---
+
+import { Cards } from "nextra/components";
+
+# Rig Tools
+
+Tools are a core concept in Rig that allow agents to perform specific actions or computations. They provide a structured way to extend an agent's capabilities beyond pure language model interactions.
+
+## Overview
+
+Tools in Rig are implemented through two main traits:
+
+- `Tool`: The base trait for implementing simple tools
+- `ToolEmbedding`: An extension trait that allows tools to be stored in vector stores and used with RAG (Retrieval Augmented Generation)
+
+## Basic Tool Implementation
+
+A basic tool requires implementing the `Tool` trait, which defines:
+
+1. A unique name identifier
+2. Input argument types
+3. Output types
+4. Error handling
+5. Tool definition (description and parameters)
+6. Execution logic
+
+Here's a simple example of a tool that adds two numbers:
+
+```rust
+#[derive(Deserialize)]
+struct AddArgs {
+    x: i32,
+    y: i32,
+}
+
+#[derive(Deserialize, Serialize)]
+struct Adder;
+
+impl Tool for Adder {
+    const NAME: &'static str = "add";
+    type Error = MathError;
+    type Args = AddArgs;
+    type Output = i32;
+
+    async fn definition(&self, _prompt: String) -> ToolDefinition {
+        ToolDefinition {
+            name: "add".to_string(),
+            description: "Add x and y together".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "x": { "type": "number", "description": "First number" },
+                    "y": { "type": "number", "description": "Second number" }
+                }
+            })
+        }
+    }
+
+    async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
+        Ok(args.x + args.y)
+    }
+}
+```
+
+## RAG-Enabled Tools
+
+Tools can be made RAG-enabled by implementing the `ToolEmbedding` trait, which allows them to be:
+
+1. Stored in vector stores
+2. Retrieved based on semantic similarity
+3. Dynamically added to agent prompts
+
+Reference implementation:
+
+```rust filename="rig-core/examples/rag_dynamic_tools.rs [28:77]"
+struct Add;
+
+impl Tool for Add {
+    const NAME: &'static str = "add";
+
+    type Error = MathError;
+    type Args = OperationArgs;
+    type Output = i32;
+
+    async fn definition(&self, _prompt: String) -> ToolDefinition {
+        serde_json::from_value(json!({
+            "name": "add",
+            "description": "Add x and y together",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "x": {
+                        "type": "number",
+                        "description": "The first number to add"
+                    },
+                    "y": {
+                        "type": "number",
+                        "description": "The second number to add"
+                    }
+                }
+            }
+        }))
+        .expect("Tool Definition")
+    }
+
+    async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
+        let result = args.x + args.y;
+        Ok(result)
+    }
+}
+
+impl ToolEmbedding for Add {
+    type InitError = InitError;
+    type Context = ();
+    type State = ();
+
+    fn init(_state: Self::State, _context: Self::Context) -> Result<Self, Self::InitError> {
+        Ok(Add)
+    }
+
+    fn embedding_docs(&self) -> Vec<String> {
+        vec!["Add x and y together".into()]
+    }
+
+    fn context(&self) -> Self::Context {}
+```
+
+## Using Tools with Agents
+
+Tools can be added to agents in two ways:
+
+1. Static Tools: Always available to the agent
+
+```rust
+let agent = client
+    .agent("gpt-4")
+    .preamble("You are a calculator.")
+    .tool(Adder)
+    .tool(Subtract)
+    .build();
+```
+
+2. Dynamic Tools: Retrieved from a vector store based on the query
+
+```rust
+let agent = client
+    .agent("gpt-4")
+    .preamble("You are a calculator.")
+    .dynamic_tools(2, vector_store_index, toolset)
+    .build();
+```
+
+## Tool Organization
+
+Tools are typically organized in a `ToolSet`, which provides:
+
+- Tool registration and management
+- Tool lookup by name
+- Tool execution routing
+- Conversion to embeddings for RAG
+
+## Best Practices
+
+1. **Unique Names**: Ensure each tool has a unique name within your application
+2. **Clear Descriptions**: Provide clear, detailed descriptions in tool definitions
+3. **Type Safety**: Use strong typing for tool arguments and outputs
+4. **Error Handling**: Implement proper error types and handling
+5. **RAG Consideration**: Consider implementing `ToolEmbedding` if your tool might benefit from semantic retrieval
+
+## Integration with LLMs
+
+Tools are automatically integrated with LLM providers through Rig's agent system. The library handles:
+
+- Converting tool definitions to provider-specific formats
+- Parsing LLM outputs into tool calls
+- Routing tool calls to appropriate implementations
+- Returning tool results to the LLM
+
+For more information on integrating tools with specific LLM providers, see the provider-specific documentation in the [`providers`](../integrations/model_providers.mdx) module.
+
+<br />
+
+<Cards.Card
+  title="API Reference (Tools)"
+  href="https://docs.rs/rig-core/latest/rig/tool/index.html"
+  arrow
+/>

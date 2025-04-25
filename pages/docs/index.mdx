@@ -3,68 +3,72 @@ title: Overview
 description: This section contains the high-level documentation for Rig.
 ---
 
-import { Blocks, CircleHelp, Landmark, Plug, HeartHandshake } from 'lucide-react'
-import { Cards } from 'nextra/components'
+import {
+  Blocks,
+  CircleHelp,
+  Landmark,
+  Plug,
+  HeartHandshake,
+} from "lucide-react";
+import { Cards } from "nextra/components";
 
 # Docs
 
 This section contains the high-level documentation for Rig.
 
 <Cards>
-    <Cards.Card
+  <Cards.Card
     title="Why Rig?"
     icon={<CircleHelp />}
-    href="/docs/1_why_rig"
+    href="/docs/why_rig"
         children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
         Main features and benefits of Rig.
-        </div>
+      </div>
     }
-    />
-    <Cards.Card
+  />
+  <Cards.Card
     title="Architecture"
     icon={<Landmark />}
-    href="/docs/3_architecture"
+    href="/docs/architecture"
     children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
         Rig's architecture, design principles and key abstractions.
-        </div>
+      </div>
     }
-    />
-    <Cards.Card
+  />
+  <Cards.Card
     title="Concepts"
     icon={<Plug />}
-    href="/docs/4_concepts"
+    href="/docs/concepts"
     children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
         Rig's core concepts and abstractions.
-        </div>
+      </div>
     }
-    />
-    <Cards.Card
+  />
+  <Cards.Card
     title="Integrations"
     icon={<Plug />}
-    href="/docs/5_integrations"
+    href="/docs/integrations"
     children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
         Integrations with LLM providers, vector databases and third party plugins (e.g Discord, Twitter).
         </div>
     }
-    />
-    <Cards.Card
+  />
+  <Cards.Card
     title="Extensions"
     icon={<Blocks />}
-    href="/docs/6_extensions"
+    href="/docs/extensions"
     children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
         Utility tools for Rig, such as a CLI, a GUI, etc.
-        </div>
+      </div>
     }
-    />
-    <Cards.Card
+  />
+  <Cards.Card
     title="How to Contribute?"
     icon={<HeartHandshake />}
-    href="/docs/7_how-to-contribute"
+    href="/docs/how_to_contribute"
     children={    <div style={{ fontSize: '0.9em', color: '#666', whiteSpace: 'normal', wordWrap: 'break-word' }}>
         How to contribute to Rig.
-        </div>
+      </div>
     }
-    />
+  />
 </Cards>
-
-

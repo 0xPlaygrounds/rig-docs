@@ -1,0 +1,125 @@
+---
+title: Embeddings
+description: This section contains the concepts for Rig.
+---
+
+import { Cards } from "nextra/components";
+
+# Embeddings in Rig
+
+Rig provides a comprehensive embeddings system for converting text and other data types into numerical vector representations that can be used for semantic search, similarity comparisons, and other NLP tasks.
+
+## Core Concepts
+
+### Embeddings
+
+An embedding is a vector representation of data (usually text) where semantically similar items are mapped to nearby points in the vector space. In Rig, embeddings are represented by the `Embedding` struct which contains:
+
+- The original document text
+- The vector representation as `Vec<f64>`
+
+### The Embedding Process
+
+1. **Document Preparation**
+
+   - Documents implement the `Embed` trait
+   - The `TextEmbedder` accumulates text to be embedded
+   - Built-in implementations for common types (strings, numbers, JSON)
+
+2. **Batch Processing**
+
+   - The `EmbeddingsBuilder` collects multiple documents
+   - Documents are batched for efficient API calls
+   - Handles concurrent embedding generation
+
+3. **Vector Generation**
+   - An `EmbeddingModel` converts text to vectors
+   - Providers like OpenAI implement the model interface
+   - Results include both document text and vectors
+
+## Working with Embeddings
+
+### Basic Usage
+
+```rust
+use rig::{embeddings::EmbeddingsBuilder, providers::openai};
+
+// Create embedding model
+let model = openai_client.embedding_model("text-embedding-ada-002");
+
+// Build embeddings
+let embeddings = EmbeddingsBuilder::new(model)
+    .document("Some text")?
+    .document("More text")?
+    .build()
+    .await?;
+```
+
+### Vector Operations
+
+Rig provides several distance metrics for comparing embeddings:
+
+- Cosine similarity
+- Angular distance
+- Euclidean distance
+- Manhattan distance
+- Chebyshev distance
+
+Example:
+
+```rust
+let similarity = embedding1.cosine_similarity(&embedding2, false);
+let distance = embedding1.euclidean_distance(&embedding2);
+```
+
+### Custom Types
+
+To make your types embeddable, implement the `Embed` trait:
+
+```rust
+struct Document {
+    title: String,
+    content: String
+}
+
+impl Embed for Document {
+    fn embed(&self, embedder: &mut TextEmbedder) -> Result<(), EmbedError> {
+        embedder.embed(self.title.clone());
+        embedder.embed(self.content.clone());
+        Ok(())
+    }
+}
+```
+
+## Best Practices
+
+1. **Document Preparation**
+
+   - Clean and normalize text before embedding
+   - Consider chunking large documents
+   - Remove irrelevant embedding content
+
+2. **Error Handling**
+
+   - Handle provider API errors gracefully
+   - Validate vector dimensions
+   - Check for empty or invalid input
+
+3. **Batching**
+   - Use `EmbeddingsBuilder` for multiple documents
+   - Respects provider's max batch size
+   - Automatically handles concurrent processing
+
+## See Also
+
+- [Completion & Generation](./completion.mdx)
+- [Tools](./tools.mdx)
+- [Vector Stores](../integrations/vector_stores.mdx)
+
+<br />
+
+<Cards.Card
+  title="API Reference (Embeddings)"
+  href="https://docs.rs/rig-core/latest/rig/embeddings/index.html"
+  arrow
+/>

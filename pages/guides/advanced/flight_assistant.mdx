@@ -1,0 +1,497 @@
+# Build a Flight Search AI Agent with Rig
+
+**TL;DR**: This step-by-step guide will teach you how to build a Flight Search AI Assistant in Rust using the [Rig](https://github.com/0xPlaygrounds/rig) library. By the end, you'll have a functional AI agent that can find the cheapest flights between two airports. Along the way, you'll grasp Rust fundamentals, understand how to set up AI agents with custom tools, and see how Rig simplifies the process.
+
+---
+
+## Introduction
+
+Ever chatted with AI assistants like Siri, Alexa, or even those nifty chatbots that help you book flights or check the weather? Ever wondered what's happening under the hood? Today, we're going to demystify that by building our very own Flight Search AI Assistant using **[Rust](https://www.rust-lang.org/)** and the **[Rig](https://github.com/0xPlaygrounds/rig)** library.
+
+You might be thinking, _"Wait, Rust? Isn't that the language with the reputation for being hard?"_ Don't worry! We'll walk through everything step by step, explaining concepts as we go. By the end, not only will you have a cool AI assistant, but you'll also have dipped your toes into Rust programming.
+
+Here's our game plan:
+
+- **Why Rust and Rig?** Understanding our tools of choice.
+- **Setting Up the Environment**: Getting Rust and Rig ready to roll.
+- **Understanding Agents and Tools**: The brains and hands of our assistant.
+- **Building the Flight Search Tool**: Where the magic happens.
+- **Creating the AI Agent**: Bringing our assistant to life.
+- **Running and Testing**: Seeing our creation in action.
+- **Wrapping Up**: Recap and next steps.
+
+> _Full source code for this project can be found on our [Replit Page](https://replit.com/@playgrounds/travelplanningagent) and [Github](https://github.com/0xPlaygrounds/awesome-rig/tree/main/travel_flights_planning_agent)_
+
+Sound exciting? Let's dive in!
+
+---
+
+## Why Rust and Rig?
+
+### Why Rust?
+
+[Rust](https://www.rust-lang.org/) is a systems programming language known for its performance and safety. But beyond that, Rust has been making waves in areas like web development, game development, and now, AI applications. Here's why we're using Rust:
+
+- **Performance**: Rust is blazingly fast, making it ideal for applications that need to handle data quickly.
+- **Safety**: With its strict compiler checks, Rust ensures [memory safety](https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html), preventing common bugs.
+- **Concurrency**: Rust makes it easier to write concurrent programs, which is great for handling multiple tasks simultaneously. Learn more about Rust's [concurrency model](https://doc.rust-lang.org/book/ch16-00-concurrency.html).
+
+### Why Rig?
+
+[Rig](https://github.com/0xPlaygrounds/rig) is an open-source Rust library that simplifies building applications powered by Large Language Models (LLMs) like GPT-4. Think of Rig as a toolkit that provides:
+
+- **Unified API**: It abstracts away the complexities of different LLM providers.
+- **High-Level Abstractions**: Helps you build agents and tools without reinventing the wheel.
+- **Extensibility**: You can create custom tools tailored to your application's needs.
+
+By combining Rust and Rig, we're setting ourselves up to build a robust, efficient, and intelligent assistant.
+
+---
+
+## Setting Up the Environment
+
+Before we start coding, let's get everything ready.
+
+### Prerequisites
+
+1. **Install Rust**: If you haven't already, install Rust by following the instructions [here](https://www.rust-lang.org/tools/install).
+
+2. **Basic Rust Knowledge**: Don't worry if you're new. We'll explain the Rust concepts as we encounter them.
+
+3. **API Keys**:
+   - **OpenAI API Key**: Sign up and get your key [here](https://platform.openai.com/).
+   - **RapidAPI Key**: We'll use this to access the trip advisor flight search API. Get it [here](https://rapidapi.com/apidojo/api/tripadvisor1/).
+
+### Project Setup
+
+#### 1. Create a New Rust Project
+
+Open your terminal and run:
+
+```bash
+cargo new flight_search_assistant
+cd flight_search_assistant
+```
+
+This initializes a new Rust project named `flight_search_assistant`.
+
+#### 2. Update `Cargo.toml`
+
+Open the `Cargo.toml` file and update it with the necessary dependencies:
+
+```toml
+[package]
+name = "flight_search_assistant"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rig-core = "0.1.0"
+tokio = { version = "1.34.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+reqwest = { version = "0.11", features = ["json", "tls"] }
+dotenv = "0.15"
+thiserror = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+```
+
+Here's a quick rundown:
+
+- **[rig-core](https://crates.io/crates/rig-core)**: The core Rig library.
+- **[tokio](https://crates.io/crates/tokio)**: Asynchronous runtime for Rust. Think of it as the engine that allows us to perform tasks concurrently.
+- **[serde](https://serde.rs/)** & **[serde_json](https://crates.io/crates/serde_json)**: Libraries for serializing and deserializing data (converting between Rust structs and JSON).
+- **[reqwest](https://crates.io/crates/reqwest)**: An HTTP client for making API requests.
+- **[dotenv](https://crates.io/crates/dotenv)**: Loads environment variables from a `.env` file.
+- **[thiserror](https://crates.io/crates/thiserror)**: A library for better error handling.
+- **[chrono](https://crates.io/crates/chrono)**: For handling dates and times.
+
+#### 3. Set Up Environment Variables
+
+We don't want to hard-code our API keys for security reasons. Instead, we'll store them in a `.env` file.
+
+Create the file:
+
+```bash
+touch .env
+```
+
+Add your API keys to `.env`:
+
+```dotenv
+OPENAI_API_KEY=your_openai_api_key_here
+RAPIDAPI_KEY=your_rapidapi_key_here
+```
+
+_Remember to replace the placeholders with your actual keys._
+
+#### 4. Install Dependencies
+
+Back in your terminal, run:
+
+```bash
+cargo build
+```
+
+This will download and compile all the dependencies.
+
+---
+
+## Understanding Agents and Tools
+
+Before we jump into coding, let's clarify some key concepts.
+
+### What Are Agents?
+
+In the context of Rig (and AI applications in general), an **Agent** is like the brain of your assistant. It's responsible for interpreting user inputs, deciding what actions to take, and generating responses.
+
+Think of the agent as the conductor of an orchestra, coordinating different instruments (or tools) to create harmonious music (or responses).
+
+### What Are Tools?
+
+**Tools** are the skills or actions that the agent can use to fulfill a task. Each tool performs a specific function. In our case, the flight search functionality is a tool that the agent can use to find flight information.
+
+Continuing our analogy, tools are the instruments in the orchestra. Each one plays a specific role.
+
+### How Do They Work Together?
+
+When a user asks, "Find me flights from NYC to LA," the agent processes this request and decides it needs to use the flight search tool to fetch the information.
+
+---
+
+## Building the Flight Search Tool
+
+Now, let's build the tool that will handle flight searches.
+
+### 1. Create the Tool File
+
+In your `src` directory, create a new file named `flight_search_tool.rs`:
+
+```bash
+touch src/flight_search_tool.rs
+```
+
+### 2. Import Necessary Libraries
+
+Open `flight_search_tool.rs` and add:
+
+```rust
+use chrono::{DateTime, Duration, Utc};
+use rig::completion::ToolDefinition;
+use rig::tool::Tool;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+use std::collections::HashMap;
+use std::env;
+```
+
+### 3. Define Data Structures
+
+We'll define structures to handle input arguments and output results.
+
+```rust
+#[derive(Deserialize)]
+pub struct FlightSearchArgs {
+    source: String,
+    destination: String,
+    date: Option<String>,
+    sort: Option<String>,
+    service: Option<String>,
+    itinerary_type: Option<String>,
+    adults: Option<u8>,
+    seniors: Option<u8>,
+    currency: Option<String>,
+    nearby: Option<String>,
+    nonstop: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct FlightOption {
+    pub airline: String,
+    pub flight_number: String,
+    pub departure: String,
+    pub arrival: String,
+    pub duration: String,
+    pub stops: usize,
+    pub price: f64,
+    pub currency: String,
+    pub booking_url: String,
+}
+```
+
+- **`FlightSearchArgs`**: Represents the parameters the user provides.
+- **`FlightOption`**: Represents each flight option we'll display to the user.
+
+_Want to dive deeper? Check out [Rust's struct documentation](https://doc.rust-lang.org/book/ch05-01-defining-structs.html)._
+
+### 4. Error Handling with `thiserror`
+
+Rust encourages us to handle errors explicitly. We'll define a custom error type:
+
+```rust
+#[derive(Debug, thiserror::Error)]
+pub enum FlightSearchError {
+    #[error("HTTP request failed: {0}")]
+    HttpRequestFailed(String),
+    #[error("Invalid response structure")]
+    InvalidResponse,
+    #[error("API error: {0}")]
+    ApiError(String),
+    #[error("Missing API key")]
+    MissingApiKey,
+}
+```
+
+This makes it easier to manage different kinds of errors that might occur during the API call.
+
+_Learn more about [error handling in Rust](https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html)._
+
+### 5. Implement the `Tool` Trait
+
+Now, we'll implement the `Tool` trait for our `FlightSearchTool`.
+
+First, define the tool:
+
+```rust
+pub struct FlightSearchTool;
+```
+
+Implement the trait:
+
+```rust
+impl Tool for FlightSearchTool {
+    const NAME: &'static str = "search_flights";
+
+    type Args = FlightSearchArgs;
+    type Output = String;
+    type Error = FlightSearchError;
+
+    async fn definition(&self, _prompt: String) -> ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Search for flights between two airports".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "source": { "type": "string", "description": "Source airport code (e.g., 'JFK')" },
+                    "destination": { "type": "string", "description": "Destination airport code (e.g., 'LAX')" },
+                    "date": { "type": "string", "description": "Flight date in 'YYYY-MM-DD' format" },
+                },
+                "required": ["source", "destination"]
+            }),
+        }
+    }
+
+    async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
+        // We'll implement the logic for calling the flight search API next.
+        Ok("Flight search results".to_string())
+    }
+}
+```
+
+- **`definition`**: Provides metadata about the tool.
+- **`call`**: The function that will be executed when the agent uses this tool.
+
+_Curious about traits? Explore [Rust's trait system](https://doc.rust-lang.org/book/ch10-02-traits.html)._
+
+### 6. Implement the `call` Function
+
+Now, let's flesh out the `call` function.
+
+#### a. Fetch the API Key
+
+```rust
+let api_key = env::var("RAPIDAPI_KEY").map_err(|_| FlightSearchError::MissingApiKey)?;
+```
+
+We retrieve the API key from the environment variables.
+
+#### b. Set Default Values
+
+```rust
+let date = args.date.unwrap_or_else(|| {
+    let date = Utc::now() + Duration::days(30);
+    date.format("%Y-%m-%d").to_string()
+});
+```
+
+If the user doesn't provide a date, we'll default to 30 days from now.
+
+#### c. Build Query Parameters
+
+```rust
+let mut query_params = HashMap::new();
+query_params.insert("sourceAirportCode", args.source);
+query_params.insert("destinationAirportCode", args.destination);
+query_params.insert("date", date);
+```
+
+#### d. Make the API Request
+
+```rust
+let client = reqwest::Client::new();
+let response = client
+    .get("https://tripadvisor16.p.rapidapi.com/api/v1/flights/searchFlights")
+    .headers({
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert("X-RapidAPI-Host", "tripadvisor16.p.rapidapi.com".parse().unwrap());
+        headers.insert("X-RapidAPI-Key", api_key.parse().unwrap());
+        headers
+    })
+    .query(&query_params)
+    .send()
+    .await
+    .map_err(|e| FlightSearchError::HttpRequestFailed(e.to_string()))?;
+```
+
+We use `reqwest` to send an HTTP GET request to the flight search API.
+
+#### e. Parse and Format the Response
+
+After receiving the response, we need to parse the JSON data and format it for the user.
+
+```rust
+let text = response
+    .text()
+    .await
+    .map_err(|e| FlightSearchError::HttpRequestFailed(e.to_string()))?;
+
+let data: Value = serde_json::from_str(&text)
+    .map_err(|e| FlightSearchError::HttpRequestFailed(e.to_string()))?;
+
+let mut flight_options = Vec::new();
+
+// Here, we need to extract the flight options. (It's quite detailed, so we've omitted the full code to keep the focus clear.)
+
+// Format the flight options into a readable string
+let mut output = String::new();
+output.push_str("Here are some flight options:\n\n");
+
+for (i, option) in flight_options.iter().enumerate() {
+    output.push_str(&format!("{}. **Airline**: {}\n", i + 1, option.airline));
+    // Additional formatting...
+}
+
+Ok(output)
+```
+
+_Note: A lot of this section involves parsing the raw API response. To keep things concise, the detailed extraction of flight options is intentionally omitted, but in your code, you'll parse the JSON to extract the necessary fields. See the [full code in the repository](https://replit.com/@playgrounds/travelplanningagent)._
+
+_Interested in JSON parsing? Check out [serde_json documentation](https://docs.serde.rs/serde_json/)._
+
+---
+
+## Creating the AI Agent
+
+Now that our tool is ready, let's build the agent that will use it.
+
+### Updating `main.rs`
+
+Open `src/main.rs` and update it:
+
+```rust
+mod flight_search_tool;
+
+use crate::flight_search_tool::FlightSearchTool;
+use dotenv::dotenv;
+use rig::completion::Prompt;
+use rig::providers::openai;
+use std::error::Error;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    dotenv().ok();
+
+    let openai_client = openai::Client::from_env();
+
+    let agent = openai_client
+        .agent("gpt-4")
+        .preamble("You are a helpful assistant that can find flights for users.")
+        .tool(FlightSearchTool)
+        .build();
+
+    let response = agent
+        .prompt("Find me flights from San Antonio (SAT) to Atlanta (ATL) on November 15th 2024.")
+        .await?;
+
+    println!("Agent response:\n{}", response);
+
+    Ok(())
+}
+```
+
+- We initialize the OpenAI client using our API key.
+- We create an agent, giving it a preamble (context) and adding our `FlightSearchTool`.
+- We prompt the agent with a query.
+- Finally, we print out the response.
+
+_Want to understand asynchronous functions? Learn about the `async` keyword and the `#[tokio::main]` macro [here](https://tokio.rs/tokio/tutorial/async)._
+
+---
+
+## Running and Testing
+
+Let's see our assistant in action!
+
+### Build the Project
+
+In your terminal, run:
+
+```bash
+cargo build
+```
+
+Fix any compilation errors that may arise.
+
+### Run the Application
+
+```bash
+cargo run
+```
+
+You should see an output similar to:
+
+```plaintext
+Agent response:
+Here are some flight options:
+
+1. **Airline**: Spirit
+   - **Flight Number**: NK123
+   - **Departure**: 2024-11-15T05:00:00-06:00
+   - **Arrival**: 2024-11-15T10:12:00-05:00
+   - **Duration**: 4 hours 12 minutes
+   - **Stops**: 1 stop(s)
+   - **Price**: 77.97 USD
+   - **Booking URL**: https://www.tripadvisor.com/CheapFlightsPartnerHandoff...
+
+2. **Airline**: American
+   - **Flight Number**: AA456
+   - **Departure**: 2024-11-15T18:40:00-06:00
+   - **Arrival**: 2024-11-15T23:58:00-05:00
+   - **Duration**: 4 hours 18 minutes
+   - **Stops**: 1 stop(s)
+   - **Price**: 119.97 USD
+   - **Booking URL**: https://www.tripadvisor.com/CheapFlightsPartnerHandoff...
+
+...
+```
+
+_Note: The actual results may vary depending on the API response._
+
+---
+
+## Wrapping Up
+
+Congratulations! You've built a functional Flight Search AI Assistant using Rust and Rig. Here's what we've achieved:
+
+- **Learned Rust Basics**: We've explored Rust's syntax and structure, including handling errors and asynchronous programming.
+- **Understood Agents and Tools**: We learned how agents act as the brain and tools as the skills.
+- **Built a Custom Tool**: We created a flight search tool that interacts with an external API.
+- **Created an AI Agent**: We integrated our tool into an agent that can understand and respond to user queries.
+- **Ran and Tested Our Assistant**: We saw our assistant in action, fetching and displaying flight options.
+
+### Next Steps
+
+- **Enhance the Tool**: Add more parameters like class of service, number of passengers, or price filtering.
+- **Improve Error Handling**: Handle cases where no flights are found or when the API rate limit is reached.
+- **User Interface**: Build a simple command-line interface or even a web frontend.

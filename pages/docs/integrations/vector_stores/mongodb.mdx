@@ -1,0 +1,211 @@
+---
+title: MongoDB
+description: This section describes the MongoDB integration.
+---
+
+import { Cards } from "nextra/components";
+
+# MongoDB Integration
+
+# Vector Store Implementation - MongoDB
+
+## Overview
+
+The MongoDB vector store implementation in Rig provides integration with MongoDB Atlas Vector Search, allowing for semantic search capabilities using MongoDB's vector search indexes.
+
+## Key Features
+
+- Cosine similarity search
+- Custom search parameters
+- Automatic index validation
+- Detailed score tracking
+- Flexible document schema support
+
+## Basic Usage
+
+```rust
+use rig_mongodb::{MongoDbVectorIndex, SearchParams};
+
+// Initialize the vector store
+let index = MongoDbVectorIndex::new(
+    collection,
+    embedding_model,
+    "vector_index",
+    SearchParams::new()
+).await?;
+
+// Search for similar documents
+let results = index.top_n::<Document>("search query", 5).await?;
+```
+
+## Implementation Details
+
+### Core Components
+
+1. **Vector Index Structure**:
+
+````rust filename="rig-mongodb/src/lib.rs [82-89]"
+/// The `MongoDbVectorIndex` struct is the core component for interacting with MongoDB's vector search capabilities.
+/// It encapsulates the MongoDB collection, the embedding model, and the index name, along with search parameters.
+///
+/// ```rust
+/// pub struct MongoDbVectorIndex {
+///     collection: Collection<Document>,
+///     model: Box<dyn EmbeddingModel>,
+///     index_name: String,
+///     search_params: SearchParams,
+/// }
+/// ```
+///
+/// - `collection`: The MongoDB collection where documents are stored.
+/// - `model`: The embedding model used to generate vector representations of text.
+/// - `index_name`: The name of the vector index in MongoDB.
+/// - `search_params`: Parameters for customizing the search behavior.
+pub struct MongoDbVectorIndex {
+    collection: Collection<Document>,
+    model: Box<dyn EmbeddingModel>,
+    index_name: String,
+    search_params: SearchParams,
+}
+
+
+````
+
+2. **Search Parameters**:
+
+- Configurable field name for embeddings
+- Customizable number of candidates
+- Support for MongoDB-specific search options
+
+### Search Pipeline
+
+The MongoDB implementation uses an aggregation pipeline with three main stages:
+
+1. **Search Stage**: Performs vector similarity search
+2. **Score Stage**: Calculates and normalizes similarity scores
+3. **Project Stage**: Formats the output documents
+
+Reference implementation:
+
+````246:285:rig-mongodb/src/lib.rs
+    ///     .top_n::<Definition>("My boss says I zindle too much, what does that mean?", 1)
+    ///     .await?;
+    /// ```
+    async fn top_n<T: for<'a> Deserialize<'a> + Send>(
+        &self,
+        query: &str,
+        n: usize,
+    ) -> Result<Vec<(f64, String, T)>, VectorStoreError> {
+        let prompt_embedding = self.model.embed_text(query).await?;
+
+        let mut cursor = self
+            .collection
+            .aggregate([
+````
+
+### Document Schema Requirements
+
+Documents must include:
+
+- A unique identifier field (`_id`)
+- An embedding vector field (configurable name)
+- Optional additional fields for storage
+
+Example schema:
+
+```rust
+#[derive(Embed, Clone, Deserialize, Debug)]
+struct Document {
+    #[serde(rename = "_id")]
+    id: String,
+    #[embed]
+    content: String,
+    embedding: Vec<f64>,
+}
+```
+
+### MongoDB Index Requirements
+
+The collection must have a vector search index configured:
+
+```rust filename="rig-mongodb/tests/integration_tests.rs [108-127]"
+
+
+```
+
+## Special Considerations
+
+1. **Index Validation**: The implementation automatically validates:
+
+   - Index existence
+   - Vector dimensions
+   - Similarity metric
+
+2. **Error Handling**: MongoDB-specific errors are converted to Rig's error types:
+
+```rust filename="rig-mongodb/src/lib.rs [54-56]"
+
+
+```
+
+3. **Performance Optimization**:
+   - Uses MongoDB's native vector search capabilities
+   - Supports cursor-based result streaming
+   - Optimizes query projection
+
+## Integration Example
+
+A complete example showing document embedding and search:
+
+```24:95:rig-mongodb/examples/vector_search_mongodb.rs
+
+#[tokio::main]
+async fn main() -> Result<(), anyhow::Error> {
+    // Initialize OpenAI client
+    let openai_api_key = env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY not set");
+    let openai_client = Client::new(&openai_api_key);
+
+    // Initialize MongoDB client
+    let mongodb_connection_string =
+        env::var("MONGODB_CONNECTION_STRING").expect("MONGODB_CONNECTION_STRING not set");
+    let options = ClientOptions::parse(mongodb_connection_string)
+        .await
+        .expect("MongoDB connection string should be valid");
+
+    let mongodb_client =
+        MongoClient::with_options(options).expect("MongoDB client options should be valid");
+
+    // Initialize MongoDB vector store
+    let collection: Collection<bson::Document> = mongodb_client
+        .database("knowledgebase")
+        .collection("context");
+
+    // Select the embedding model and generate our embeddings
+    let model = openai_client.embedding_model(TEXT_EMBEDDING_ADA_002);
+
+    let words = vec![
+        Word {
+            id: "doc0".to_string(),
+            definition: "Definition of a *flurbo*: A flurbo is a green alien that lives on cold planets".to_string(),
+        },
+        Word {
+            id: "doc1".to_string(),
+            definition: "Definition of a *glarb-glarb*: A glarb-glarb is a ancient tool used by the ancestors of the inhabitants of planet Jiro to farm the land.".to_string(),
+        },
+        Word {
+            id: "doc2".to_string(),
+            definition: "Definition of a *linglingdong*: A term used by inhabitants of the far side of the moon to describe humans.".to_string(),
+        }
+    ];
+
+```
+
+For detailed API reference and additional features, see the MongoDB Atlas Vector Search documentation and Rig's API documentation.
+
+<br />
+<Cards>
+  <Cards.Card
+    title="API Reference (docs.rs)"
+    href="https://docs.rs/rig-mongodb/latest/rig_mongodb/index.html"
+  />
+</Cards>

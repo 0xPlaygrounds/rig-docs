@@ -1,0 +1,268 @@
+---
+title: Agents
+description: This section contains the concepts for Rig.
+---
+
+import { Cards, FileTree } from "nextra/components";
+
+# Rig Agents: High-Level LLM Orchestration
+
+Agents in Rig provide a high-level abstraction for working with LLMs, combining models with context, tools, and configuration. They serve as the primary interface for building complex AI applications, from simple chatbots to sophisticated RAG systems.
+
+Reference:
+
+> Agents
+> Rig also provides high-level abstractions over LLMs in the form of the [Agent](crate::agent::Agent) type.
+>
+> The [Agent](crate::agent::Agent) type can be used to create anything from simple agents that use vanilla models to full blown
+> RAG systems that can be used to answer questions using a knowledge base.
+
+<FileTree.File name="rig-core/src/lib.rs [46:50]" />
+
+## Core Concepts
+
+### Agent Structure
+
+An Agent consists of:
+
+1. **Base Components**
+
+   - Completion Model (e.g., GPT-4, Claude)
+   - System Prompt (preamble)
+   - Configuration (temperature, max tokens)
+
+2. **Context Management**
+
+   - Static Context: Always available documents
+   - Dynamic Context: RAG-based contextual documents
+   - Vector Store Integration
+
+3. **Tool Integration**
+   - Static Tools: Always available capabilities
+   - Dynamic Tools: Context-dependent capabilities
+   - Tool Management via ToolSet
+
+## Usage Patterns
+
+### Basic Agent Creation
+
+```rust
+use rig::{providers::openai, Agent};
+
+let openai = openai::Client::from_env();
+
+// Create simple agent
+let agent = openai.agent("gpt-4")
+    .preamble("You are a helpful assistant.")
+    .temperature(0.7)
+    .build();
+
+// Use the agent
+let response = agent.prompt("Hello!").await?;
+```
+
+### RAG-Enabled Agent
+
+```rust
+use rig::{Agent, vector_store::InMemoryVectorStore};
+
+// Create vector store and index
+let store = InMemoryVectorStore::new();
+let index = store.index(embedding_model);
+
+// Create RAG agent
+let agent = openai.agent("gpt-4")
+    .preamble("You are a knowledge assistant.")
+    .dynamic_context(3, index)  // Retrieve 3 relevant documents
+    .build();
+```
+
+### Tool-Augmented Agent
+
+```rust
+use rig::{Agent, Tool};
+
+// Create agent with tools
+let agent = openai.agent("gpt-4")
+    .preamble("You are a capable assistant with tools.")
+    .tool(calculator)
+    .tool(web_search)
+    .dynamic_tools(2, tool_index, toolset)
+    .build();
+```
+
+## Key Features
+
+### Dynamic Context Resolution
+
+The agent automatically:
+
+1. Processes incoming prompts
+2. Queries vector stores for relevant context
+3. Integrates retrieved information
+4. Maintains conversation coherence
+
+Reference:
+
+```rust filename="rig-core/src/agent.rs [171:197]"
+        let dynamic_context = stream::iter(self.dynamic_context.iter())
+            .then(|(num_sample, index)| async {
+                Ok::<_, VectorStoreError>(
+                    index
+                        .top_n(prompt, *num_sample)
+                        .await?
+                        .into_iter()
+                        .map(|(_, id, doc)| {
+                            // Pretty print the document if possible for better readability
+                            let text = serde_json::to_string_pretty(&doc)
+                                .unwrap_or_else(|_| doc.to_string());
+
+                            Document {
+                                id,
+                                text,
+                                additional_props: HashMap::new(),
+                            }
+                        })
+                        .collect::<Vec<_>>(),
+                )
+            })
+            .try_fold(vec![], |mut acc, docs| async {
+                acc.extend(docs);
+                Ok(acc)
+            })
+            .await
+            .map_err(|e| CompletionError::RequestError(Box::new(e)))?;
+```
+
+### Tool Management
+
+Agents can:
+
+- Maintain static and dynamic tool sets
+- Resolve tool calls automatically
+- Handle tool execution and error states
+
+Reference:
+
+```rust filename="rig-core/src/agent.rs [199:221]"
+        let dynamic_tools = stream::iter(self.dynamic_tools.iter())
+            .then(|(num_sample, index)| async {
+                Ok::<_, VectorStoreError>(
+                    index
+                        .top_n_ids(prompt, *num_sample)
+                        .await?
+                        .into_iter()
+                        .map(|(_, id)| id)
+                        .collect::<Vec<_>>(),
+                )
+            })
+            .try_fold(vec![], |mut acc, docs| async {
+                for doc in docs {
+                    if let Some(tool) = self.tools.get(&doc) {
+                        acc.push(tool.definition(prompt.into()).await)
+                    } else {
+                        tracing::warn!("Tool implementation not found in toolset: {}", doc);
+                    }
+                }
+                Ok(acc)
+            })
+            .await
+            .map_err(|e| CompletionError::RequestError(Box::new(e)))?;
+```
+
+### Flexible Configuration
+
+The AgentBuilder pattern provides extensive configuration options:
+
+```rust
+let agent = AgentBuilder::new(model)
+    // Basic configuration
+    .preamble("System instructions")
+    .temperature(0.8)
+    .max_tokens(1000)
+
+    // Context management
+    .context("Static context")
+    .dynamic_context(5, vector_store)
+
+    // Tool integration
+    .tool(tool1)
+    .dynamic_tools(3, tool_store, toolset)
+
+    // Additional parameters
+    .additional_params(json!({
+        "top_p": 0.9,
+        "frequency_penalty": 0.7
+    }))
+    .build();
+```
+
+## Best Practices
+
+1. **Context Management**
+
+   - Keep static context minimal and focused
+   - Use dynamic context for large knowledge bases
+   - Consider context window limitations
+
+2. **Tool Integration**
+
+   - Prefer static tools for core functionality
+   - Use dynamic tools for context-specific operations
+   - Implement proper error handling in tools
+
+3. **Performance Optimization**
+   - Configure appropriate sampling sizes for dynamic content
+   - Use temperature settings based on task requirements
+   - Monitor and optimize token usage
+
+## Common Patterns
+
+### Conversational Agents
+
+```rust
+let chat_agent = openai.agent("gpt-4")
+    .preamble("You are a conversational assistant.")
+    .temperature(0.9)
+    .build();
+
+let response = chat_agent
+    .chat("Hello!", previous_messages)
+    .await?;
+```
+
+### RAG Knowledge Base
+
+```rust
+let kb_agent = openai.agent("gpt-4")
+    .preamble("You are a knowledge base assistant.")
+    .dynamic_context(5, document_store)
+    .temperature(0.3)
+    .build();
+```
+
+### Tool-First Agent
+
+```rust
+let tool_agent = openai.agent("gpt-4")
+    .preamble("You are a tool-using assistant.")
+    .tool(calculator)
+    .tool(web_search)
+    .dynamic_tools(2, tool_store, toolset)
+    .temperature(0.5)
+    .build();
+```
+
+## See Also
+- [Completion Models](./completion.mdx)
+- [Vector Stores](../integrations/vector_stores.mdx)
+- [Tools](./tools.mdx)
+- [RAG Systems](../../guides/rag/rag_system.mdx)
+
+<br />
+
+<Cards.Card
+  title="API Reference (Agent)"
+  href="https://docs.rs/rig-core/latest/rig/agent/index.html"
+  arrow
+/>
