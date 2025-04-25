@@ -89,26 +89,3 @@ let agent = agent_builder.build();
 let response = agent.prompt("Add 10 + 10").await?;
 tracing::info!("Agent response: {:?}", response);
 ```
-
----
-
-## Summary
-
-By combining MCP and Rig:
-
-- You define reusable tools that work across agents.
-- You expose them via an MCP server.
-- You use Rig's agent builder to dynamically add those tools.
-- Your LLMs can now call tools in a structured and composable way.
-
----
-
-## Resources
-
-- [Rig Documentation](https://rig.rs)
-- [MCP Spec](https://github.com/anthropics/mcp)
-- `mcp_core`, `rig`, and `mcp_core_macros` crates on [crates.io](https://crates.io)
-
----
-
-Let me know if you'd like a diagram or visual for this workflow!
