@@ -40,5 +40,6 @@ jobs:
       - name: Prettier check
         run: pnpm run format:check
 
+      # We currently have no tests we can run for this to be useful (hence the `--passWithNoTests` flag).
       - name: Run jest
-        run: pnpm run test
+        run: pnpm run test --passWithNoTests

@@ -3,61 +3,124 @@ title: Model Providers
 description: This section describes the different model providers that Rig supports.
 ---
 
-import { Cards } from 'nextra/components'
+import { Cards } from "nextra/components";
 
 # Model Providers
 
- Currently, the following providers are supported:
- <Cards>
- <Cards.Card title="Anthropic" href="./model_providers/anthropic" />
- <Cards.Card title="OpenAI" href="./model_providers/openai" />
- <Cards.Card title="Azure OpenAI (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/azure/index.html" arrow />
- <Cards.Card title="Cohere (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/cohere/index.html" arrow />
- <Cards.Card title="DeepSeek (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/deepseek/index.html" arrow />
- <Cards.Card title="EternalAI (source)" href="https://github.com/0xPlaygrounds/rig/tree/main/rig-eternalai" arrow />
- <Cards.Card title="Google Gemini (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/gemini/index.html" arrow />
- <Cards.Card title="Galadriel (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/galadriel/index.html" arrow />
- <Cards.Card title="Groq (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/groq/index.html" arrow />
- <Cards.Card title="Hyperbolic (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/hyperbolic/index.html" arrow />
- <Cards.Card title="Mira (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/mira/index.html" arrow />
- <Cards.Card title="Moonshot (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/moonshot/index.html" arrow />
- <Cards.Card title="Ollama (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/ollama/index.html" arrow />
- <Cards.Card title="OpenRouter (source)" href="https://docs.rs/rig-core/latest/rig/providers/openrouter/index.html" arrow />
- <Cards.Card title="Perplexity (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/perplexity/index.html" arrow />
- <Cards.Card title="TogetherAI (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/together/index.html" arrow />
- <Cards.Card title="xAI (docs.rs)" href="https://docs.rs/rig-core/latest/rig/providers/xai/index.html" arrow />
- </Cards>
+Currently, the following providers are supported:
 
- Each provider has its own module, which contains a `Client` implementation that can
- be used to initialize completion and embedding models and execute requests to those models.
+<Cards>
+  <Cards.Card title="Anthropic" href="./model_providers/anthropic" />
+  <Cards.Card title="OpenAI" href="./model_providers/openai" />
+  <Cards.Card
+    title="Azure OpenAI (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/azure/index.html"
+    arrow
+  />
+  <Cards.Card
+    title="Cohere (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/cohere/index.html"
+    arrow
+  />
+  <Cards.Card
+    title="DeepSeek (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/deepseek/index.html"
+    arrow
+  />
+  <Cards.Card
+    title="EternalAI (source)"
+    href="https://github.com/0xPlaygrounds/rig/tree/main/rig-eternalai"
+    arrow
+  />
+  <Cards.Card
+    title="Google Gemini (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/gemini/index.html"
+    arrow
+  />
+  <Cards.Card
+    title="Galadriel (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/galadriel/index.html"
+    arrow
+  />
+  <Cards.Card
+    title="Groq (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/groq/index.html"
+    arrow
+  />
+  <Cards.Card
+    title="Hyperbolic (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/hyperbolic/index.html"
+    arrow
+  />
+  <Cards.Card
+    title="Mira (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/mira/index.html"
+    arrow
+  />
+  <Cards.Card
+    title="Moonshot (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/moonshot/index.html"
+    arrow
+  />
+  <Cards.Card
+    title="Ollama (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/ollama/index.html"
+    arrow
+  />
+  <Cards.Card
+    title="OpenRouter (source)"
+    href="https://docs.rs/rig-core/latest/rig/providers/openrouter/index.html"
+    arrow
+  />
+  <Cards.Card
+    title="Perplexity (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/perplexity/index.html"
+    arrow
+  />
+  <Cards.Card
+    title="TogetherAI (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/together/index.html"
+    arrow
+  />
+  <Cards.Card
+    title="xAI (docs.rs)"
+    href="https://docs.rs/rig-core/latest/rig/providers/xai/index.html"
+    arrow
+  />
+</Cards>
 
- The clients also contain methods to easily create higher level AI constructs such as
- agents and RAG systems, reducing the need for boilerplate.
+Each provider has its own module, which contains a `Client` implementation that can
+be used to initialize completion and embedding models and execute requests to those models.
 
- # Example
- ```rust
- use rig::{providers::openai, agent::AgentBuilder};
+The clients also contain methods to easily create higher level AI constructs such as
+agents and RAG systems, reducing the need for boilerplate.
 
- // Initialize the OpenAI client
- let openai = openai::Client::new("your-openai-api-key");
+# Example
 
- // Create a model and initialize an agent
- let gpt_4o = openai.completion_model("gpt-4o");
+```rust
+use rig::{providers::openai, agent::AgentBuilder};
 
- let agent = AgentBuilder::new(gpt_4o)
-     .preamble("\
-         You are Gandalf the white and you will be conversing with other \
-         powerful beings to discuss the fate of Middle Earth.\
-     ")
-     .build();
+// Initialize the OpenAI client
+let openai = openai::Client::new("your-openai-api-key");
 
- // Alternatively, you can initialize an agent directly
- let agent = openai.agent("gpt-4o")
-     .preamble("\
-         You are Gandalf the white and you will be conversing with other \
-         powerful beings to discuss the fate of Middle Earth.\
-     ")
-     .build();
- ```
- Note: The example above uses the OpenAI provider client, but the same pattern can
- be used with the Cohere provider client.
+// Create a model and initialize an agent
+let gpt_4o = openai.completion_model("gpt-4o");
+
+let agent = AgentBuilder::new(gpt_4o)
+    .preamble("\
+        You are Gandalf the white and you will be conversing with other \
+        powerful beings to discuss the fate of Middle Earth.\
+    ")
+    .build();
+
+// Alternatively, you can initialize an agent directly
+let agent = openai.agent("gpt-4o")
+    .preamble("\
+        You are Gandalf the white and you will be conversing with other \
+        powerful beings to discuss the fate of Middle Earth.\
+    ")
+    .build();
+```
+
+Note: The example above uses the OpenAI provider client, but the same pattern can
+be used with the Cohere provider client.
