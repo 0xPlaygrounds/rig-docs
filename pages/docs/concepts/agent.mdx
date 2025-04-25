@@ -259,6 +259,10 @@ let res = tool_agent
 println!("{res}");
 ```
 
+The above example will have a maximum of 1 turn due to passing a value of 1 into `.multi_turn()` - so it can use 1 round of tool calls.
+
+There is no arbitrary maximum on the amount of turns possible, although you may want to use reasonable turn limits to avoid errors.
+
 ## See Also
 - [Completion Models](./completion.mdx)
 - [Vector Stores](../integrations/vector_stores.mdx)
