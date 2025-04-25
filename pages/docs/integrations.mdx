@@ -15,14 +15,18 @@ Rig follows a modular integration strategy that separates core functionality int
 
 Model providers are built directly into `rig-core` under the `providers` module, as shown in:
 
-```rust filename="rig-core/src/lib.rs:61-66"
-//! Rig natively supports the following completion and embedding model provider integrations:
-//! - OpenAI
+```rust filename="rig-core/src/providers/mod.rs:3-13"
+//! Currently, the following providers are supported:
 //! - Cohere
-//! - Anthropic
+//! - OpenAI
 //! - Perplexity
-//! - Gemini
+//! - Anthropic
+//! - Google Gemini
 //! - xAI
+//! - EternalAI
+//! - DeepSeek
+//! - Azure OpenAI
+//! - Mira
 ```
 
 Each provider integration includes:

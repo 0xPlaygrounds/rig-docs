@@ -35,6 +35,30 @@
   top: 0.5rem;
 }
 
+/* Logo carousel override */
+.logo-carousel-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden;
+}
+
+.logo-carousel-container .nextra-content-container {
+  max-width: 100% !important;
+  padding: 0 !important;
+}
+
+/* Create a more seamless animation */
+.animate-scroll {
+  width: fit-content;
+  display: flex;
+  will-change: transform;
+}
+
+/* Force logos to have transparent background */
+.h-10.flex.items-center.bg-transparent img {
+  background: transparent !important;
+}
+
 /* Subsequent details should have less of a gap */
 details + details {
   margin-top: 0.5rem !important;
