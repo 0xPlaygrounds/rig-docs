@@ -8,12 +8,12 @@ import { Cards, FileTree } from 'nextra/components'
 
 Agents in Rig provide a high-level abstraction for working with LLMs, combining models with context, tools, and configuration. They serve as the primary interface for building complex AI applications, from simple chatbots to sophisticated RAG systems.
 
-Reference: 
+Reference:
 
 
 > Agents
 > Rig also provides high-level abstractions over LLMs in the form of the [Agent](crate::agent::Agent) type.
-> 
+>
 > The [Agent](crate::agent::Agent) type can be used to create anything from simple agents that use vanilla models to full blown
 > RAG systems that can be used to answer questions using a knowledge base.
 
@@ -179,15 +179,15 @@ let agent = AgentBuilder::new(model)
     .preamble("System instructions")
     .temperature(0.8)
     .max_tokens(1000)
-    
+
     // Context management
     .context("Static context")
     .dynamic_context(5, vector_store)
-    
+
     // Tool integration
     .tool(tool1)
     .dynamic_tools(3, tool_store, toolset)
-    
+
     // Additional parameters
     .additional_params(json!({
         "top_p": 0.9,
@@ -236,15 +236,27 @@ let kb_agent = openai.agent("gpt-4")
     .build();
 ```
 
-### Tool-First Agent
+### Agents with Tools
+When using `AgentBuilder`, you can add all kinds of tools to your `Agent`:
 ```rust
 let tool_agent = openai.agent("gpt-4")
     .preamble("You are a tool-using assistant.")
-    .tool(calculator)
-    .tool(web_search)
+    .tool(calculator) // calculator tool
+    .tool(web_search) // web search tool - for example, Bing API
     .dynamic_tools(2, tool_store, toolset)
     .temperature(0.5)
     .build();
+```
+
+By default, it will return the tool result. However, you can add multi-turns to be able to allow the LLM to use the tool results:
+```rust
+let res = tool_agent
+    .prompt("Please calculate 2+5")
+    .multi_turn(1)
+    .send()
+    .await?;
+
+println!("{res}");
 ```
 
 ## See Also
