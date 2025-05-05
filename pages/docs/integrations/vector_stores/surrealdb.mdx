@@ -1,0 +1,148 @@
+---
+title: SurrealDB
+---
+
+import { Cards } from 'nextra/components'
+
+# Rig-SurrealDB Integration
+
+The `rig-surrealdb` crate provides a seamless vector store integration for SurrealDB, enabling similarity search on embedded documents using vector operations. SurrealDB is a fast, cloud-native, distributed database designed for modern apps—now supercharged with LLM vector search support via Rig.
+
+## Key Features
+
+- **SurrealDB-native Search**: Uses SurrealDB's built-in vector functions like `vector::similarity::cosine`.
+- **Flexible Distance Metrics**: Supports multiple distance functions including Cosine, Euclidean, Hamming, Jaccard, and KNN.
+- **Ergonomic Interface**: Fully implements the `VectorStoreIndex` trait from Rig, with simple insert and query APIs.
+- **LLM-Aware Embeddings**: Designed to work with embedding models like OpenAI's `text-embedding-3-small` out of the box.
+
+## Usage
+
+### Setup
+
+Add `rig-surrealdb` to your `Cargo.toml`:
+
+```toml
+[dependencies]
+rig-surrealdb = "0.1.0"
+```
+
+### Example Workflow
+
+1. **Connect to SurrealDB**: Use an in-memory or remote connection.
+
+```rust
+let surreal = Surreal::new::<Mem>(()).await?;
+surreal.use_ns("example").use_db("example").await?;
+```
+
+2. **Initialize Embedding Model**: Create or import an embedding model using Rig's providers.
+
+```rust
+let model = rig::providers::openai::Client::from_env()
+    .embedding_model(rig::providers::openai::TEXT_EMBEDDING_3_SMALL);
+```
+
+3. **Create Vector Store**: Use defaults or customize the table and distance function.
+
+```rust
+let vector_store = SurrealVectorStore::with_defaults(model, surreal);
+```
+
+4. **Insert Documents**: Automatically embed and insert documents into the vector index.
+
+```rust
+vector_store.insert_documents(documents).await?;
+```
+
+5. **Query Similarity**: Perform top-N vector search using a natural language query.
+
+```rust
+let results = vector_store.top_n::<WordDefinition>("what is glarb-glarb", 3).await?;
+```
+
+## Example Code
+
+```rust
+use rig::{embeddings::EmbeddingsBuilder, vector_store::VectorStoreIndex, Embed};
+use rig_surrealdb::{Mem, SurrealVectorStore};
+use serde::{Deserialize, Serialize};
+use surrealdb::Surreal;
+
+#[derive(Embed, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Default)]
+struct WordDefinition {
+    word: String,
+    #[serde(skip)]
+    #[embed]
+    definition: String,
+}
+
+#[tokio::main]
+async fn main() -> Result<(), anyhow::Error> {
+    let openai_client = rig::providers::openai::Client::from_env();
+    let model = openai_client.embedding_model(rig::providers::openai::TEXT_EMBEDDING_3_SMALL);
+
+    let surreal = Surreal::new::<Mem>(()).await?;
+    surreal.use_ns("example").use_db("example").await?;
+
+    let words = vec![
+        WordDefinition {
+            word: "flurbo".to_string(),
+            definition: "A fictional currency from Rick and Morty.".to_string()
+        },
+        WordDefinition {
+            word: "glarb-glarb".to_string(),
+            definition: "A creature from the marshlands of Glibbo.".to_string()
+        },
+    ];
+
+    let documents = EmbeddingsBuilder::new(model.clone())
+        .documents(words)
+        .unwrap()
+        .build()
+        .await?;
+
+    let vector_store = SurrealVectorStore::with_defaults(model, surreal);
+    vector_store.insert_documents(documents).await?;
+
+    let query = "weird alien creature";
+    let results = vector_store.top_n::<WordDefinition>(query, 2).await?;
+
+    for (distance, _id, doc) in results {
+        println!("Distance: {:.3}, Word: {}", distance, doc.word);
+    }
+
+    Ok(())
+}
+```
+
+## Supported Distance Functions
+
+You can customize similarity search using different distance metrics:
+
+```rust
+use rig_surrealdb::SurrealDistanceFunction;
+
+let custom_store = SurrealVectorStore::new(
+    model,
+    surreal,
+    Some("my_table".into()),
+    SurrealDistanceFunction::Jaccard,
+);
+```
+
+Available options:
+- `Cosine` (default)
+- `Euclidean`
+- `Hamming`
+- `Jaccard`
+- `Knn`
+
+## Additional Resources
+
+- **Examples**: Check the [examples directory](https://github.com/0xPlaygrounds/rig/tree/main/rig-surrealdb/examples) for advanced usage.
+- **SurrealDB Docs**: Visit the [SurrealDB documentation](https://surrealdb.com/docs) for information on query language and capabilities.
+
+<br/>
+<Cards>
+<Cards.Card title="API Reference (docs.rs)" href="https://docs.rs/rig-surrealdb/latest/rig_surrealdb/"/>
+</Cards>
