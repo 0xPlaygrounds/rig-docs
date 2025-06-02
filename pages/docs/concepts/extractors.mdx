@@ -193,17 +193,6 @@ for doc in docs {
 }
 ```
 
-### With Agents
-
-The extractor can be used as part of a larger agent system:
-
-```rust
-let data_extractor = client.extractor::<StructuredData>(model).build();
-let agent = client.agent(model)
-    .tool(data_extractor)
-    .build();
-```
-
 ## See Also
 - [Agent System](./agent.md)
 - [Completion Models](./completion.md)
