@@ -1,4 +1,4 @@
-# Contributing to Rig Docs
+# Contributing to the Rig documentation
 
 Thank you for your interest in contributing to the Rig documentation! We're excited to have your help in making Rig more accessible and easier to understand.
 
@@ -22,12 +22,14 @@ Pull requests are always welcome! Please follow these steps before submitting on
 If you're new to contributing, [How to Contribute to an Open Source Project on GitHub](https://kcd.im/pull-request) is a great free resource to get started.
 
 ## Project Structure
-This documentation site is powered by [Nextra](https://nextra.site/) and lives in a standalone repo separate from the main Rig codebase.
+This documentation site is powered by [Nextra](https://nextra.site) and lives in a standalone repo separate from the main Rig codebase.
 
 - All documentation lives in the `pages/` directory and is written in MDX (Markdown + React components).
 - Global layout and configuration are defined in `theme.config.ts` and `nextra.config.js`.
 
 If you're unsure where a new page or section should live, open an issue first to discuss it.
+
+This project additionally uses `pnpm`, so you will want to ensure this is installed beforehand for ease of setup.
 
 ## Developing
 

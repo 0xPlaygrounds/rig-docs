@@ -7,12 +7,12 @@ import { Callout } from 'nextra/components'
 import { Hammer, Lightbulb, Book, MessageCircleQuestion } from 'lucide-react'
 
 
-export const section_icon = { display: 'inline', size: '1rem', marginBottom: '0.25rem' }    
+export const section_icon = { display: 'inline', size: '1rem', marginBottom: '0.25rem' }
 
 <div className="section-title">How to Contribute?</div>
 
-Rig is an open-source project and we welcome contributions from the community. 
-Whether you're a developer, designer, or writer, there are many ways to contribute to the project. 
+Rig is an open-source project and we welcome contributions from the community.
+Whether you're a developer, designer, or writer, there are many ways to contribute to the project.
 The section below outlines the different areas where your help is most needed.
 
 <Callout type="info" emoji="👋">
@@ -26,21 +26,21 @@ If your favorite model provide is not supported, consider adding support for it 
 
 Important information about model provider integrations:
 - Each **model provider integration** is contained in its own module under [`rig-core/src/providers`](https://github.com/0xPlaygrounds/rig/tree/main/rig-core/src/providers).
-- If the provider has an OpenAI compatible API, there is no need to write a new provider module since Rig already supports OpenAI. 
+- If the provider has an OpenAI compatible API, there is no need to write a new provider module since Rig already supports OpenAI.
 Instead, you can simply add documentation indicating how you can use the existing [`openai`](https://github.com/0xPlaygrounds/rig/blob/main/rig-core/src/providers/openai.rs) integration to use the new provider.
 - Make sure to follow the repository's [contribution guidelines](https://github.com/0xPlaygrounds/rig/blob/main/CONTRIBUTING.md).
 
 <Callout type="warning" emoji="⚠️">
-Model provider integrations should not require new dependencies that are not already included in the project. 
+Model provider integrations should not require new dependencies that are not already included in the project.
 </Callout>
 
 ### Vector Store Integrations
-Rig aims to support a wide range of vector stores for storing and retrieving embeddings. 
+Rig aims to support a wide range of vector stores for storing and retrieving embeddings.
 If your favorite vector store is not supported, consider adding support for it in Rig and making a pull request for it!
 
 Important information about vector store integrations:
-- Each vector store integration is contained in its own crate located in the root of the repository. 
-The naming convention for vector store crates is `rig-<store_name>` (e.g. [`rig-mongodb`](https://github.com/0xPlaygrounds/rig/tree/main/rig-mongodb)). 
+- Each vector store integration is contained in its own crate located in the root of the repository.
+The naming convention for vector store crates is `rig-<store_name>` (e.g. [`rig-mongodb`](https://github.com/0xPlaygrounds/rig/tree/main/rig-mongodb)).
 This is because vector store integrations often require many additional dependencies that are not needed otherwise.
 - Consider adding an integration test for the integration! You can base yourself off of the existing vector store integration tests like this one for [Qdrant](https://github.com/0xPlaygrounds/rig/blob/main/rig-qdrant/tests/integration_tests.rs).
 - Make sure to follow the repository's [contribution guidelines](https://github.com/0xPlaygrounds/rig/blob/main/CONTRIBUTING.md).
@@ -57,7 +57,7 @@ If you have experience with Rig and would like to share your knowledge with othe
 If you would like your tutorial to be featured on this website, please open a pull request on the [docs repository](https://github.com/0xPlaygrounds/rig-docs).
 
 ### Other Documentation Improvements
-If you find a typo or mistake in the documentation, or any section that could use improvement, please open an issue to report it or a pull request to fix it on the [docs repository](https://github.com/0xPlaygrounds/rig-docs).
+If you find a typo or mistake in the documentation, or any section that could use improvement, please open an issue to report it or a pull request to fix it on the [docs repository](https://github.com/0xPlaygrounds/rig-docs). The documentation repository also has a `CONTRIBUTING.md` file that you may find useful for understanding how to get the repo working locally.
 
 ## <><Lightbulb style={section_icon}/> Ideas and Feedback </>
 If you have an idea for a new Rig feature or feedback on existing features, please let us know by opening an issue on the [GitHub repository](https://github.com/0xPlaygrounds/rig/issues)!
