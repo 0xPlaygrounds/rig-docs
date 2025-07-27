@@ -63,13 +63,14 @@ Vector stores are maintained as companion crates to keep the core library lean. 
 
 Current vector store integrations include:
 
-```markdown filename="CONTRIBUTING.md:91-95"
+```markdown filename="CONTRIBUTING.md:91-96"
 Vector stores are available as separate companion-crates:
 
 - MongoDB vector store: [`rig-mongodb`](https://github.com/0xPlaygrounds/rig/tree/main/rig-mongodb)
 - LanceDB vector store: [`rig-lancedb`](https://github.com/0xPlaygrounds/rig/tree/main/rig-lancedb)
 - Neo4j vector store: [`rig-neo4j`](https://github.com/0xPlaygrounds/rig/tree/main/rig-neo4j)
 - Qdrant vector store: [`rig-qdrant`](https://github.com/0xPlaygrounds/rig/tree/main/rig-qdrant)
+- SurrealDB vector store: [`rig-surrealdb`](https://github.com/0xPlaygrounds/rig/tree/main/rig-surrealdb)
 ```
 
 Each vector store companion crate:
@@ -79,7 +80,7 @@ Each vector store companion crate:
 - Provides store-specific configuration options
 - Contains dedicated examples and documentation
 
-import { Callout } from "nextra/components";
+import { Callout } from 'nextra/components'
 
 <Callout type="info" emoji="ℹ️">
   Note: In-memory vector store is included in `rig-core` as a default

@@ -128,6 +128,43 @@ impl ToolEmbedding for Add {
     fn context(&self) -> Self::Context {}
 ```
 
+## Deriving JSON schemas with macros
+While implementing your own tools, you may find that using the raw `serde_json::json!` macro can be a bit clumsy and error prone.
+
+Fortunately, the `schemars` crate has a great way to solve this: with a derive macro (and helpers)! By deriving the `schemars::JsonSchema` macro, we can use description helpers to write our JSON schema instead of having to write it all manually.
+```rust
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
+struct OperationArgs {
+    #[schemars(description = "The first number to add.")]
+    x: i32,
+    #[schemars(description = "The first number to add.")]
+    y: i32,
+}
+```
+
+Once you're ready to implement your tool, now rather than having to write it all out manually you can turn your schema into a `serde_json::Value` and slot it into your tool definition:
+```rust
+#[derive(Deserialize, Serialize)]
+struct Adder;
+
+impl Tool for Adder {
+    // .. other trait impl parts here
+    async fn definition(&self, _prompt: String) -> ToolDefinition {
+        // this should technically never error out as it's generated from set codegen
+        let parameters = serde_json::to_value(schema_for!(OperationArgs)).unwrap();
+
+        ToolDefinition {
+            name: "add".to_string(),
+            description: "Add x and y together".to_string(),
+            parameters,
+        }
+    }
+    // .. other trait impl parts here
+}
+```
+
+Rig currently uses `schemars` v0.8.16. If you're encountering strange errors, you may want to double check the version of your `schemars` crate.
+
 ## Using Tools with Agents
 
 Tools can be added to agents in two ways:

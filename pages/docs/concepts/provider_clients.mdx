@@ -1,0 +1,57 @@
+---
+title: Clients
+description: This section contains the concepts for Rig.
+---
+# Model provider clients in Rig
+A provider client (or a model provider client) is an entity represented as a struct that can create clients for different types of LLMs or models, depending on the features supported by a given model provider.
+
+Since the introduction of `rig::client::DynClientBuilder` (`rig` v0.13), clients now must implement the `rig::client::ProviderClient` trait. The trait signature can be found below:
+
+```rust
+pub trait ProviderClient:
+    AsCompletion + AsTranscription + AsEmbeddings + AsImageGeneration + AsAudioGeneration + Debug
+{
+    /// Create a client from the process's environment.
+    /// Panics if an environment is improperly configured.
+    fn from_env() -> Self
+    where
+        Self: Sized;
+
+    // .. there are other methods here, but as they already have a default implementation
+    // for the most part we don't need to concern ourselves with them
+}
+```
+`ProviderClient` currently requires the following traits:
+- `Debug`
+- `AsCompletion` (the trait for creating a completion model client; additionally offers methods for agents and JSON extractors)
+- `AsTranscription` (the trait for creating a transcription model client)
+- `AsEmbedding` (the trait for creating a embedding model client)
+- `AsImageGeneration` (the trait for creating an image generation model client)
+- `AsAudioGeneration` (the trait for creating an audio generation model client)
+
+Each of the above traits (besides `Debug` which is a standard trait) is relatively easy to implement.
+
+While this trait is slightly confusing, your provider does not have to actually have to support everything listed. Fortunately, there is a macro called `impl_conversion_traits` which allows us to auto-implement whichever traits a given provider doesn't support by simply returning None.
+
+An example of this can be found below:
+```rust
+// note: when adding a model to the rig-core codebase, `rig` should be `crate`
+rig::impl_conversion_traits!(
+    AsEmbeddings,
+    AsTranscription,
+    AsImageGeneration,
+    AsAudioGeneration for Client
+);
+```
+
+Because this returns None, if you attempt to create an embedding model client (for example) from this particular Client using `rig::client::DynClientBuilder`, it will simply return None rather than a model.
+
+## How to write your client implementation
+To implement a given trait, you simply need to implement the corresponding client trait. For example - the trait for `AsCompletion` is `rig::client::completion::CompletionClient`. Because `AsCompletion` is already implemented for `T: Clone` (meaning every single type), as long as you're able to derive Clone for your client, `AsCompletion` will automatically be implemented - which automatically satisfies the relevant requirement for `ProviderClient`. This is the same across all the other traits.
+
+As Rig is currently an unstable crate (SemVer dictates that non-stable crates must stay at v0.x), this page may be updated in accordance with the state of the crate.
+
+## Using the dynamic client builder
+If you're running a multi-agent service, you may find yourself needing to pull from more than one provider at any given time. For this type of use case, the `rig::client::DynClientBuilder` may prove very useful.
+
+Interested in code snippets? Check out [our GitHub repo example](https://github.com/0xPlaygrounds/rig/blob/main/rig-core/examples/dyn_client.rs) where we create both an OpenAI and Anthropic client, then try to prompt them both and print the result.

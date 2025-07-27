@@ -1,0 +1,90 @@
+---
+title: Model Context Protocol
+description: Learn about how you can use Model Context Protocol with the Rig library.
+---
+
+# Using Model Context Protocol (MCP) with Rig
+
+The **Model Context Protocol (MCP)** by Anthropic provides a standardized way for AI agents to dynamically discover, register, and invoke external tools through a common interface. This enables tools to be treated as first-class citizens in LLM-based workflows and allows for seamless integration between agents and external capabilities.
+
+## What is MCP?
+
+MCP is a protocol that enables language models and agents to:
+- Discover available tools from a remote server.
+- Initialize and declare their capabilities.
+- Invoke registered tools and receive responses.
+
+It defines both **client** and **server** roles. The **server** hosts tools and responds to invocations, while the **client** discovers and uses those tools.
+
+## Creating an MCP client
+
+Creating an MCP client requires the `mcp-core` crate to be installed. You can run the following one-line command below in your terminal to install it quickly:
+```bash
+cargo add mcp-core
+```
+
+You will also additionally need the `mcp` feature enabled on the `rig-core` crate. If you haven't done so already, you can run the following one-line command in your terminal to add it to your project:
+```bash
+cargo add rig-core -F mcp
+```
+
+### Initialising an MCP client
+
+To connect to the server and fetch tool metadata, you need to create a client using the `mcp-core` crate.
+
+```rust
+use mcp_core::{ClientSseTransportBuilder, ClientBuilder};
+
+let mcp_client = ClientBuilder::new(
+    ClientSseTransportBuilder::new("http://127.0.0.1:3000/sse".to_string()).build(),
+)
+.build();
+
+mcp_client.open().await?;
+
+let init_res = mcp_client
+    .initialize(
+        Implementation {
+            name: "mcp-client".to_string(),
+            version: "0.1.0".to_string(),
+        },
+        ClientCapabilities::default(),
+    )
+    .await?;
+println!("Initialized: {:?}", init_res);
+```
+
+Note that you **must** initialise the client by using `mcp_client.initialize()`, otherwise this can result in connection errors!
+
+### Listing MCP tools
+
+Once initialized, the client can list tools available on the MCP server:
+
+```rust
+let tools_list_res = mcp_client.list_tools(None, None).await?;
+println!("Tools: {:?}", tools_list_res);
+```
+
+### Using MCP tools
+
+Now that you've retrieved the tool list from the MCP server, you can now pass it into a Rig agent:
+
+```rust
+let completion_model = providers::openai::Client::from_env();
+let mut agent_builder = completion_model.agent("gpt-4o");
+
+agent_builder = tools_list_res
+    .tools
+    .into_iter()
+    .fold(agent_builder, |builder, tool| {
+        builder.mcp_tool(tool, mcp_client.clone().into())
+    });
+
+let agent = agent_builder.build();
+
+let response = agent.prompt("Add 10 + 10").await?;
+tracing::info!("Agent response: {:?}", response);
+```
+
+### Troubleshooting
+If you are having issues with the `mcp_core::tool` macro expansion, you may need to ensure your `schemars` version is at `0.8.22`.
