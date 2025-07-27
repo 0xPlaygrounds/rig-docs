@@ -9,8 +9,7 @@ import { Cards, FileTree } from "nextra/components";
 
 Agents in Rig provide a high-level abstraction for working with LLMs, combining models with context, tools, and configuration. They serve as the primary interface for building complex AI applications, from simple chatbots to sophisticated RAG systems.
 
-Reference:
-=======
+# Reference:
 
 > Agents
 > Rig also provides high-level abstractions over LLMs in the form of the [Agent](crate::agent::Agent) type.
@@ -243,7 +242,9 @@ let kb_agent = openai.agent("gpt-4")
 ```
 
 ### Agents with Tools
+
 When using `AgentBuilder`, you can add all kinds of tools to your `Agent`:
+
 ```rust
 let tool_agent = openai.agent("gpt-4")
     .preamble("You are a tool-using assistant.")
@@ -255,6 +256,7 @@ let tool_agent = openai.agent("gpt-4")
 ```
 
 By default, it will return the tool result. However, you can add multi-turns to be able to allow the LLM to use the tool results:
+
 ```rust
 let res = tool_agent
     .prompt("Please calculate 2+5")
@@ -279,7 +281,7 @@ There is no arbitrary maximum on the amount of turns possible, although you may 
 <br />
 
 <Cards.Card
-    title="API Reference (Agent)"
-    href="https://docs.rs/rig-core/latest/rig/agent/index.html"
-    arrow
+  title="API Reference (Agent)"
+  href="https://docs.rs/rig-core/latest/rig/agent/index.html"
+  arrow
 />

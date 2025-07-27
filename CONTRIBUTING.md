@@ -22,6 +22,7 @@ Pull requests are always welcome! Please follow these steps before submitting on
 If you're new to contributing, [How to Contribute to an Open Source Project on GitHub](https://kcd.im/pull-request) is a great free resource to get started.
 
 ## Project Structure
+
 This documentation site is powered by [Nextra](https://nextra.site) and lives in a standalone repo separate from the main Rig codebase.
 
 - All documentation lives in the `pages/` directory and is written in MDX (Markdown + React components).
@@ -34,7 +35,9 @@ This project additionally uses `pnpm`, so you will want to ensure this is instal
 ## Developing
 
 ### Setup
+
 To run the docs locally:
+
 ```bash
 git clone https://github.com/0xPlaygrounds/rig-docs
 cd rig-docs
@@ -45,10 +48,12 @@ pnpm dev
 This will start a local development server on http://localhost:3000.
 
 You can verify the production build with:
+
 ```bash
 pnpm build
 pnpm start
 ```
 
 ### Checking Links
+
 You can use nextra's local dev mode to verify internal and external links are functioning as expected.

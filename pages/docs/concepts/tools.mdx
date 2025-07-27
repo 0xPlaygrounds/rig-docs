@@ -129,9 +129,11 @@ impl ToolEmbedding for Add {
 ```
 
 ## Deriving JSON schemas with macros
+
 While implementing your own tools, you may find that using the raw `serde_json::json!` macro can be a bit clumsy and error prone.
 
 Fortunately, the `schemars` crate has a great way to solve this: with a derive macro (and helpers)! By deriving the `schemars::JsonSchema` macro, we can use description helpers to write our JSON schema instead of having to write it all manually.
+
 ```rust
 #[derive(Deserialize, Serialize, schemars::JsonSchema)]
 struct OperationArgs {
@@ -143,6 +145,7 @@ struct OperationArgs {
 ```
 
 Once you're ready to implement your tool, now rather than having to write it all out manually you can turn your schema into a `serde_json::Value` and slot it into your tool definition:
+
 ```rust
 #[derive(Deserialize, Serialize)]
 struct Adder;

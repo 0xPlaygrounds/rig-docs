@@ -435,12 +435,14 @@ that implement the [CompletionModel](crate::completion::CompletionModel) and
 The full list of model providers is available under [Docs (Model Providers)](/docs/integrations/model_providers).
 
 ### Vector Stores
+
 Rig currently supports the following vector store integrations via companion crates (this is a non-exhaustive list):
- - `rig-mongodb`: Vector store implementation for MongoDB
- - `rig-lancedb`: Vector store implementation for LanceDB
- - `rig-neo4j`: Vector store implementation for Neo4j
- - `rig-qdrant`: Vector store implementation for Qdrant
- - `rig-surrealdb`: Vector store implementation for SurrealDB
+
+- `rig-mongodb`: Vector store implementation for MongoDB
+- `rig-lancedb`: Vector store implementation for LanceDB
+- `rig-neo4j`: Vector store implementation for Neo4j
+- `rig-qdrant`: Vector store implementation for Qdrant
+- `rig-surrealdb`: Vector store implementation for SurrealDB
 
 You can also implement your own vector store integration by defining types that
 implement the [VectorStoreIndex](crate::vector_store::VectorStoreIndex) trait.
