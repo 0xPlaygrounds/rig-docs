@@ -85,3 +85,6 @@ let agent = agent_builder.build();
 let response = agent.prompt("Add 10 + 10").await?;
 tracing::info!("Agent response: {:?}", response);
 ```
+
+### Troubleshooting
+If you are having issues with the `mcp_core::tool` macro expansion, you may need to ensure your `schemars` version is at `0.8.22`.
