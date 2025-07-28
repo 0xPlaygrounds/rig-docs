@@ -204,6 +204,10 @@ let agent = client.agent(model)
     .build();
 ```
 
+### Troubleshooting
+
+If you are receiving the `NoData` error, the probable cause of this is that the model you are using is too weak to reliably call the tool. If the inner tool doesn't get called, no JSON will be generated.
+
 ## See Also
 
 - [Agent System](./agent.md)
