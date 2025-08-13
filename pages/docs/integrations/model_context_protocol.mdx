@@ -7,6 +7,8 @@ description: Learn about how you can use Model Context Protocol with the Rig lib
 
 The **Model Context Protocol (MCP)** by Anthropic provides a standardized way for AI agents to dynamically discover, register, and invoke external tools through a common interface. This enables tools to be treated as first-class citizens in LLM-based workflows and allows for seamless integration between agents and external capabilities.
 
+We have currently two separate MCP integrations separated by feature flags, but are planning to totally deprecate the `mcp` feature flag integration in 0.18 and move to `rmcp` as the primary integration. Documentation may be found here for both integrations in the case that you need to migrate.
+
 ## What is MCP?
 
 MCP is a protocol that enables language models and agents to:
@@ -16,6 +18,20 @@ MCP is a protocol that enables language models and agents to:
 - Invoke registered tools and receive responses.
 
 It defines both **client** and **server** roles. The **server** hosts tools and responds to invocations, while the **client** discovers and uses those tools.
+
+## Getting started
+
+Creating an MCP client requires the `rmcp` crate to be installed. You can run the following one-line command below in your terminal to install it quickly:
+
+```bash
+cargo add mcp-core
+```
+
+You will also additionally need the `rmcp` feature enabled on the `rig-core` crate. If you haven't done so already, you can run the following one-line command in your terminal to add it to your project:
+
+```bash
+cargo add rig-core -F rmcp
+```
 
 ### Initialising an MCP client
 
@@ -69,9 +85,10 @@ tracing::info!("Agent response: {:?}", response);
 ```
 
 # Legacy MCP integration
+
 The following material will describe the original `mcp` integration that we had via `mcp-core`. Note that this will be phased out in Rig 0.18!
 
-## Creating an MCP client
+## Getting started
 
 Creating an MCP client requires the `mcp-core` crate to be installed. You can run the following one-line command below in your terminal to install it quickly:
 
@@ -83,20 +100,6 @@ You will also additionally need the `mcp` feature enabled on the `rig-core` crat
 
 ```bash
 cargo add rig-core -F mcp
-```
-
-## Creating an MCP client
-
-Creating an MCP client requires the `mcp-core` crate to be installed. You can run the following one-line command below in your terminal to install it quickly:
-
-```bash
-cargo add rmcp
-```
-
-You will also additionally need the `rmcp` feature enabled on the `rig-core` crate. If you haven't done so already, you can run the following one-line command in your terminal to add it to your project:
-
-```bash
-cargo add rig-core -F rmcp
 ```
 
 ### Initialising an MCP client
