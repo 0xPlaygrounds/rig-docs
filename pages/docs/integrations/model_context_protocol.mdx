@@ -17,6 +17,60 @@ MCP is a protocol that enables language models and agents to:
 
 It defines both **client** and **server** roles. The **server** hosts tools and responds to invocations, while the **client** discovers and uses those tools.
 
+### Initialising an MCP client
+
+To connect to the server and fetch tool metadata, you need to create a client using the `rmcp` crate. The complete unabridged example code can be found [from the GitHub repo.](https://github.com/0xPlaygrounds/rig/blob/main/rig-core/examples/rmcp.rs)
+
+```rust
+let transport =
+    rmcp::transport::StreamableHttpClientTransport::from_uri("http://localhost:8080");
+
+let client_info = ClientInfo {
+    protocol_version: Default::default(),
+    capabilities: ClientCapabilities::default(),
+    client_info: Implementation {
+        name: "rig-core".to_string(),
+        version: "0.18.0".to_string(),
+    },
+};
+
+let client = client_info.serve(transport).await.inspect_err(|e| {
+    tracing::error!("client error: {:?}", e);
+})?;
+```
+
+### Listing MCP tools
+
+Once initialized, the client can list tools available on the MCP server:
+
+```rust
+let tools: Vec<Tool> = client.list_tools(Default::default()).await?.tools;
+
+println!("Tools: {:?}", tools);
+```
+
+### Using MCP tools
+
+Now that you've retrieved the tool list from the MCP server, you can now pass it into a Rig agent:
+
+```rust
+let completion_model = providers::openai::Client::from_env();
+let mut agent_builder = completion_model.agent("gpt-4o");
+
+let agent = tools
+    .into_iter()
+    .fold(agent, |agent, tool| agent.rmcp_tool(tool, client.clone()))
+    .build();
+
+let agent = agent_builder.build();
+
+let response = agent.prompt("Add 10 + 10").await?;
+tracing::info!("Agent response: {:?}", response);
+```
+
+# Legacy MCP integration
+The following material will describe the original `mcp` integration that we had via `mcp-core`. Note that this will be phased out in Rig 0.18!
+
 ## Creating an MCP client
 
 Creating an MCP client requires the `mcp-core` crate to be installed. You can run the following one-line command below in your terminal to install it quickly:
@@ -29,6 +83,20 @@ You will also additionally need the `mcp` feature enabled on the `rig-core` crat
 
 ```bash
 cargo add rig-core -F mcp
+```
+
+## Creating an MCP client
+
+Creating an MCP client requires the `mcp-core` crate to be installed. You can run the following one-line command below in your terminal to install it quickly:
+
+```bash
+cargo add rmcp
+```
+
+You will also additionally need the `rmcp` feature enabled on the `rig-core` crate. If you haven't done so already, you can run the following one-line command in your terminal to add it to your project:
+
+```bash
+cargo add rig-core -F rmcp
 ```
 
 ### Initialising an MCP client
