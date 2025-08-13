@@ -7,6 +7,7 @@ const meta = {
   embeddings: "Embeddings",
   loaders: "Loaders",
   chains: "Chains",
+  observability: "Observability",
 };
 
 export default meta;
