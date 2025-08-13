@@ -161,6 +161,7 @@ Reference:
 ```
 
 ### Additional Parameters
+
 Sometimes the default Agent configuration is not enough and the model provider you want to use might need extra parameters (for example, reasoning or some other provider-specific parameters). In this case, you can use `AgentBuilder::additional_params()` to be able to provide these parameters which will then be passed into the completion request.
 
 ```rust
@@ -235,6 +236,7 @@ let tool_agent = openai.agent("gpt-4")
 ```
 
 ### Multi-turn
+
 Assuming your agent only calls 1 tool at a time, the default configuration should typically be enough. However, as seen in the above code snippet, we've just created an agent with two potential tools using `.dynamic_tools()` - meaning that there may be an instance of it calling two tools to be used, in which case you will need to increase the number of maximum turns to avoid receiving a `MaxDepthError` (produced when your agent has used up too many turns to avoid issues with infinite tool calling).
 
 To do this in Rig, once you've added your prompt you can simply use the `.multi_turn()` function to add extra maximum turns:
