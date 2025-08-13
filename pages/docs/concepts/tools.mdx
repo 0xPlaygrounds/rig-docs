@@ -168,6 +168,41 @@ impl Tool for Adder {
 
 Rig currently uses `schemars` v0.8.16. If you're encountering strange errors, you may want to double check the version of your `schemars` crate.
 
+### Tool Macros
+
+Often times if you just want to create simple tools and don't need any special particular implementation details, writing out the entire `impl Tool` block can be quite cumbersome.
+
+Fortunately, the `rig_derive` crate has a helpful derive macro called `tool_macro` which you can use to create your own tools easily. See below for an example of usage:
+
+```rust
+use rig_derive::tool_macro;
+
+// note that OpenAI Responses API, the currently default OpenAI integration for `rig`, requires all inputs to be required
+#[rig_tool(
+    description = "Perform basic arithmetic operations",
+    required(x, y, operation)
+)]
+fn calculator(x: i32, y: i32, operation: String) -> Result<i32, rig::tool::ToolError> {
+    match operation.as_str() {
+        "add" => Ok(x + y),
+        "subtract" => Ok(x - y),
+        "multiply" => Ok(x * y),
+        "divide" => {
+            if y == 0 {
+                Err(rig::tool::ToolError::ToolCallError(
+                    "Division by zero".into(),
+                ))
+            } else {
+                Ok(x / y)
+            }
+        }
+        _ => Err(rig::tool::ToolError::ToolCallError(
+            format!("Unknown operation: {operation}").into(),
+        )),
+    }
+}
+```
+
 ## Using Tools with Agents
 
 Tools can be added to agents in two ways:

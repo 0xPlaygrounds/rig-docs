@@ -9,16 +9,6 @@ import { Cards, FileTree } from "nextra/components";
 
 Agents in Rig provide a high-level abstraction for working with LLMs, combining models with context, tools, and configuration. They serve as the primary interface for building complex AI applications, from simple chatbots to sophisticated RAG systems.
 
-# Reference:
-
-> Agents
-> Rig also provides high-level abstractions over LLMs in the form of the [Agent](crate::agent::Agent) type.
->
-> The [Agent](crate::agent::Agent) type can be used to create anything from simple agents that use vanilla models to full blown
-> RAG systems that can be used to answer questions using a knowledge base.
-
-<FileTree.File name="rig-core/src/lib.rs [46:50]" />
-
 ## Core Concepts
 
 ### Agent Structure
@@ -170,29 +160,18 @@ Reference:
             .map_err(|e| CompletionError::RequestError(Box::new(e)))?;
 ```
 
-### Flexible Configuration
-
-The AgentBuilder pattern provides extensive configuration options:
+### Additional Parameters
+Sometimes the default Agent configuration is not enough and the model provider you want to use might need extra parameters (for example, reasoning or some other provider-specific parameters). In this case, you can use `AgentBuilder::additional_params()` to be able to provide these parameters which will then be passed into the completion request.
 
 ```rust
-let agent = AgentBuilder::new(model)
-    // Basic configuration
-    .preamble("System instructions")
-    .temperature(0.8)
-    .max_tokens(1000)
+// replace `create_openai_client() with whatever way you're using
+// to instantiate your model provider client
+let openai_client = create_openai_client();
 
-    // Context management
-    .context("Static context")
-    .dynamic_context(5, vector_store)
-
-    // Tool integration
-    .tool(tool1)
-    .dynamic_tools(3, tool_store, toolset)
-
-    // Additional parameters
-    .additional_params(json!({
-        "top_p": 0.9,
-        "frequency_penalty": 0.7
+let agent = openai_client.agent("gpt-5")
+    .preamble("You are a helpful agent")
+    .additional_params(serde_json::json!({
+        "foo": "bar"
     }))
     .build();
 ```
@@ -255,7 +234,10 @@ let tool_agent = openai.agent("gpt-4")
     .build();
 ```
 
-By default, it will return the tool result. However, you can add multi-turns to be able to allow the LLM to use the tool results:
+### Multi-turn
+Assuming your agent only calls 1 tool at a time, the default configuration should typically be enough. However, as seen in the above code snippet, we've just created an agent with two potential tools using `.dynamic_tools()` - meaning that there may be an instance of it calling two tools to be used, in which case you will need to increase the number of maximum turns to avoid receiving a `MaxDepthError` (produced when your agent has used up too many turns to avoid issues with infinite tool calling).
+
+To do this in Rig, once you've added your prompt you can simply use the `.multi_turn()` function to add extra maximum turns:
 
 ```rust
 let res = tool_agent

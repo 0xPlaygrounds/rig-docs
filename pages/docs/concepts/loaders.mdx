@@ -9,7 +9,12 @@ import { Cards } from "nextra/components";
 
 Rig's loader system provides utilities for loading and preprocessing various file types, with a focus on structured data ingestion for LLM applications. The system is designed to be extensible and error-tolerant, with built-in support for common file types.
 
-## Core Components
+## Integrations
+
+So far, we support the following integrations:
+- Any text file (`FileLoader`)
+- PDFs (`PdfFileLoader`)
+- ePub files (`EpubFileLoader`)
 
 ### FileLoader
 
@@ -50,22 +55,9 @@ let documents = PdfFileLoader::with_glob("docs/*.pdf")?
 
 ## Key Features
 
-### 1. Error Handling
+### 1. Flexible Loading Patterns
 
-The loaders provide robust error handling through custom error types:
-
-```rust
-pub enum FileLoaderError {
-    InvalidGlobPattern(String),
-    IoError(std::io::Error),
-    PatternError(glob::PatternError),
-    GlobError(glob::GlobError),
-}
-```
-
-### 2. Flexible Loading Patterns
-
-Multiple ways to specify input sources:
+When using the loaders, there are multiple ways to specify input sources:
 
 ```rust
 // Using glob patterns
@@ -73,6 +65,10 @@ let glob_loader = FileLoader::with_glob("**/*.txt")?;
 
 // Using directory
 let dir_loader = FileLoader::with_dir("data/")?;
+
+// Using a Vec<u8> - this can be from any source: for example, a file download from the Internet
+let bytes: Vec<u8> = vec![1, 2, 3, 4];
+let u8_loader = FileLoader::from_bytes(bytes);
 ```
 
 ### 3. Content Processing

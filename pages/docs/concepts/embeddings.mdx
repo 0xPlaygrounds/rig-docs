@@ -20,75 +20,73 @@ An embedding is a vector representation of data (usually text) where semanticall
 
 ### The Embedding Process
 
-1. **Document Preparation**
+In order for a type (or piece of data) to be considered a valid embeddable document, it needs to implement the `Embed` trait. While you can write the `impl Embed` type manually, we also have a derive macro to help you implement this quickly and without hassle (note that the `Embed` derive macro requires the `derive` feature of `rig-core` to be enabled).
 
-   - Documents implement the `Embed` trait
-   - The `TextEmbedder` accumulates text to be embedded
-   - Built-in implementations for common types (strings, numbers, JSON)
-
-2. **Batch Processing**
-
-   - The `EmbeddingsBuilder` collects multiple documents
-   - Documents are batched for efficient API calls
-   - Handles concurrent embedding generation
-
-3. **Vector Generation**
-   - An `EmbeddingModel` converts text to vectors
-   - Providers like OpenAI implement the model interface
-   - Results include both document text and vectors
-
-## Working with Embeddings
-
-### Basic Usage
+The following type is a valid `Embed` type:
 
 ```rust
-use rig::{embeddings::EmbeddingsBuilder, providers::openai};
+#[derive(Embed)]
+struct Foo {
+    id: i32,
+    #[embed]
+    name: String
+}
+```
 
-// Create embedding model
-let model = openai_client.embedding_model("text-embedding-ada-002");
+The following type is also a valid Embed type:
 
-// Build embeddings
+```rust
+struct Foo {
+    id: i32,
+    name: String
+}
+
+impl Embed for WordDefinition {
+    fn embed(&self, embedder: &mut TextEmbedder) -> Result<(), EmbedError> {
+       // Embeddings only need to be generated for `definition` field.
+       // Split the definitions by comma and collect them into a vector of strings.
+       // That way, different embeddings can be generated for each definition in the `definitions` string.
+       embedder.embed(self.name.to_owned());
+
+       Ok(())
+    }
+}
+```
+
+To use this in a workflow, it is ideal to use the `EmbeddingsBuilder` struct to be able to process multiple documents at once:
+
+```rust
+// required trait import for embedding_model fn to exist
+use rig::client::embeddings::EmbeddingsClient;
+let documents = vec![
+    Foo {
+        id: 1,
+        name: "Rig".to_string()
+    },
+    Foo {
+        id: 2,
+        name: "Playgrounds".to_string()
+    }
+];
+
+let model = rig::providers::openai::Client::from_env().embedding_model("text-embedding-ada-002");
+
 let embeddings = EmbeddingsBuilder::new(model)
-    .document("Some text")?
-    .document("More text")?
+    .documents(documents)?
     .build()
     .await?;
 ```
 
-### Vector Operations
-
-Rig provides several distance metrics for comparing embeddings:
-
-- Cosine similarity
-- Angular distance
-- Euclidean distance
-- Manhattan distance
-- Chebyshev distance
-
-Example:
+The returned `embeddings` type signature will now be an iterator over `(T, OneOrMany<Embedding>)` where T implements Embed. You can either collect these into a vector and use it elsewhere, or dump it directly into a vector store:
 
 ```rust
-let similarity = embedding1.cosine_similarity(&embedding2, false);
-let distance = embedding1.euclidean_distance(&embedding2);
-```
+use rig::vector_store::InsertDocuments;
+// note: this function is pseudo-code
+// look into specific crate integrations for more indepth
+// usage explanations
+let qdrant = create_qdrant_vector_store();
 
-### Custom Types
-
-To make your types embeddable, implement the `Embed` trait:
-
-```rust
-struct Document {
-    title: String,
-    content: String
-}
-
-impl Embed for Document {
-    fn embed(&self, embedder: &mut TextEmbedder) -> Result<(), EmbedError> {
-        embedder.embed(self.title.clone());
-        embedder.embed(self.content.clone());
-        Ok(())
-    }
-}
+qdrant.insert_documents(embeddings).await?;
 ```
 
 ## Best Practices
