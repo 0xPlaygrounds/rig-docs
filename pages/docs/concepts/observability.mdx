@@ -1,0 +1,25 @@
+---
+title: Observability
+description: This section contains information about observability in Rig.
+---
+
+## What is observability?
+
+Simply put: observability is how well you can understand the inner workings and behaviour of your application given a situation. There's many ways you can increase observability, and it can encompass a broad range of actions:
+
+- Logging messages (for example, model provider inputs/outputs)
+- Using `println!` to debug an object
+- Collecting the metrics of your application to compare in the future
+- Using a platform like Grafana to collect and analyse logs, metrics and traces
+
+## How observable is Rig?
+
+Currently, we primarily use `debug` traces for anything not required to be shown in production. For example: you might want to know the input request for a specific model provider if you're trying to debug an issue. However, in production where you might have users that will almost certainly not be necessary. By then, you will most likely have already conducted the necessary tests required to ensure your program works before deployment.
+
+For any issues where there is clearly an error or a warning needs to be sent to log output, we emit errors and warnings respectively.
+
+## Is Rig compatible with any observability providers currently?
+
+The short answer is yes. As far as traces go, we only use the `tracing` crate to provide traces - that means you can implement whatever tracing subscriber layer you'd like on top. For example, you might want to use an OpenTelemetry collector to send your traces to Grafana or Datadog.
+
+However, we are not natively compatible with any LLM-specific observability platforms (for example, Langfuse). In this case, you would need to set up the required traces/telemetry yourself.
