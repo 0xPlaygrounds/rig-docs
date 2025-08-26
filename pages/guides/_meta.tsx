@@ -4,6 +4,7 @@ const meta = {
   rag: "Retrieval Augmented Generation (RAG)",
   advanced: "Advanced Workflows",
   deploy: "Deploy Rig",
+  extension: "Extending Rig",
 };
 
 export default meta;
