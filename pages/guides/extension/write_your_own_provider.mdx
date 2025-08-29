@@ -117,6 +117,10 @@ impl_conversion_traits!(
 
 This is required because of the `rig::DynClientBuilder` which allows for very convenient client generation without egregious boilerplate.
 
+Additionally, you may notice some `ClientDyn` traits which are required to be implemented for `ProviderClient` to actually be implemented - each one is individually implemented when its `Model` equivalent is implemented. For example, `CompletionClientDyn` is automatically implemented for types that implement `CompletionClient`, where the resulting model type also implements `CompletionModel`.
+
+Next, we will look at implementing `CompletionClient` and `CompletionModel`. The other traits are implemented in a similar manner (and therefore won't be covered), although the return type will differ depending on the trait being implemented.
+
 ### Implementing a Completion Client
 The `CompletionClient` trait looks like this:
 
@@ -150,6 +154,7 @@ struct CompletionModel {
 
 However, our work is not done here yet. Let's have a look at how to implement the `CompletionModel` trait.
 
+
 ### Implementing a Completion Model
 For each client type, there is also a model type. In this case, the completion type is no different: we have a trait for chat completion clients, as well as a trait for chat completion models (`CompletionModel`).
 
@@ -176,8 +181,36 @@ pub trait CompletionModel:
 }
 ```
 
-For most completion model types that revolve around HTTP API calls, typically the go-to model here would be converting the `CompletionRequest` type to a JSON body that you then send off to the model provider API. Generally speaking however, the shape of this JSON body depends on the API. The recommended way (if you don't think the API will change much) is to create a type that represents the completion request then use `TryFrom<(String, CompletionRequest)>` (where String is the model name as CompletionRequest won't have it). However, you can also use the `serde_json::json!()` macro - but you will need to be careful that you don't accidentally make any mistakes while trying to form the JSON up.
+For most completion model types that revolve around HTTP API calls, typically the go-to model here would be converting the `CompletionRequest` type to a JSON body that you then send off to the model provider API. Generally speaking however, the shape of this JSON body depends on the API. The recommended way (if you don't think the API will change much) is to create a type that represents the completion request then use `TryFrom<(String, CompletionRequest)>` (where String is the model name as CompletionRequest won't have it). However, you can also use the `serde_json::json!()` macro - but you will need to be careful that you don't accidentally make any mistakes while trying to form the JSON up. You will also of course need to provide a completion response type for the HTTP response to be deserialized to (typically a struct).
 
-There are several key implementation details here to be aware of:
-- The streaming response must implement `GetTokenUsage`. This is because during agent multi-turn streaming, you will want to be able to garuantee that you can aggregate the token usage and display it at the end.
-- While the stream function itself does not technically have to be a stream reading from the implementation details, you will likely want to return a stream that returns a final stream response.
+Should you decide to use raw JSON instead of using a `TryFrom<T>` conversion then converting to JSON, you may need some additional helper functions for composing your JSON. While the `json_utils` module in Rig is internal (since it is not intended to be exposed as a public API), you can simply copy what functions you need from the module into your own crate.
+
+For some inspiration on writing your own streaming response functionality, here are some implementations that already exist in the Rig library:
+- [OpenAI Chat Completions API](https://github.com/0xPlaygrounds/rig/blob/cbf98830cd0ebd2bf5f2d9627660c8ae2c42c134/rig-core/src/providers/openai/completion/streaming.rs#L84)
+- [Gemini Completions](https://github.com/0xPlaygrounds/rig/blob/cbf98830cd0ebd2bf5f2d9627660c8ae2c42c134/rig-core/src/providers/gemini/streaming.rs#L44)
+
+### Converting messages
+When writing your own integration, you will more than likely need to write your own message type (unless it has complete parity with the OpenAI message type because of OpenAI compatibility). Each internal message in Rig is either a User or Assistant message composed of one or more user or assistant content types, respectively. For example, a user message may contain text contain as well as an image URL (or base64 encoded string) to be parsed by an LLM.
+
+The most common way to solve this in the official Rig providers module is to use `TryFrom<rig::completion::Message> for Vec<T>`. However, when doing this in your own local crate(s) you may find that this is impossible to implement because of the orphan rule.
+
+There are a couple of ways to get around this:
+- Use a free-standing function
+- Write a trait [(coming soon!)](https://github.com/0xPlaygrounds/rig/pull/753) which emulates the `TryFrom<T>` semantics for you.
+
+The easiest way to get around this is using a free-standing function:
+
+```rust
+fn convert_rig_message_to_my_message(message: rig::completion::Message) -> Result<Vec<Message>, MyError> {
+    // .. some code
+}
+
+// practical usage
+let messages: Vec<Message> = messages
+    .into_iter()
+    .map(convert_rig_message_to_my_message)
+    .collect::<Result<Vec<Message>, MyError>>()?
+    .into_iter()
+    .flatten()
+    .collect();
+```
