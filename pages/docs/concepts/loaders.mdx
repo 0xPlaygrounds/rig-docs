@@ -130,11 +130,13 @@ impl<T: Loadable> Loadable for Result<T, PdfLoaderError> {
 ## Best Practices
 
 1. **Error Handling**
+
    - Use `ignore_errors()` for fault-tolerant processing
    - Handle specific error types when needed
    - Log errors appropriately
 
 2. **Resource Management**
+
    - Process files in batches
    - Consider memory usage with large files
    - Clean up temporary resources
