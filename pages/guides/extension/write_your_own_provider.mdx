@@ -68,7 +68,7 @@ You may note in the code snippet above that we use the builder pattern to help b
 
 While it is useful to implement Debug for our Client struct, you should aim to ensure maximum safety. Users should under no circumstances be able to accidentally log their API key in the terminal or shell, or whatever logging they decide to use. Therefore, rather than simply deriving it we will actually implement this manually.
 
-See below for a Debug implementation which presents the base URL and HTTP client as their default Debug implementation, then redacts the API key by simply writing "<REDACTED>" rather than `&self.api_key`.
+See below for a Debug implementation which presents the base URL and HTTP client as their default Debug implementation, then redacts the API key with relevant text.
 
 ```rust
 impl std::fmt::Debug for Client {
