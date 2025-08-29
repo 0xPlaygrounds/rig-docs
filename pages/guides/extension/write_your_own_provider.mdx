@@ -85,7 +85,9 @@ impl std::fmt::Debug for Client {
 This can of course be adjusted to your needs, depending on how much detail needs to be removed from the Debug implementation.
 
 ## Client Traits
+
 There are many different traits that can be implemented. You can find what these are in the `rig::client` module, but essentially they are as follows:
+
 - `CompletionClient` - create a type that can generate Chat Completions.
 - `EmbeddingsClient` - create a type that can generate embeddings.
 - `TranscriptionClient` - create a type that can generate transcriptions.
@@ -95,11 +97,13 @@ There are many different traits that can be implemented. You can find what these
 As you can see, each one represents a different type of possible behaviour that can be carried out by a given client or model in Rig. Generally speaking, these are relatively easy to implement. We will go over the Completion Client API as an example.
 
 ## Implementing ProviderClient
+
 Before we start, as you many have noticed there is additionally a `ProviderClient` trait required by every single one of these traits. This particular trait provides a way for you to extend your Client so that it can be generated from environment variables instead of using `::new()`.
 
 Unfortunately, there's just one small problem: it requires implementing a trait for every single possible generation type.
 
 Fortunately, there are ways around this. There are a number of traits that we can use:
+
 - `AsCompletion` - prevents you from needing to write a completion client.
 - `AsEmbeddings` - prevents you from needing to write an embeddings client.
 
@@ -122,6 +126,7 @@ Additionally, you may notice some `ClientDyn` traits which are required to be im
 Next, we will look at implementing `CompletionClient` and `CompletionModel`. The other traits are implemented in a similar manner (and therefore won't be covered), although the return type will differ depending on the trait being implemented.
 
 ### Implementing a Completion Client
+
 The `CompletionClient` trait looks like this:
 
 ```rust
@@ -154,8 +159,8 @@ struct CompletionModel {
 
 However, our work is not done here yet. Let's have a look at how to implement the `CompletionModel` trait.
 
-
 ### Implementing a Completion Model
+
 For each client type, there is also a model type. In this case, the completion type is no different: we have a trait for chat completion clients, as well as a trait for chat completion models (`CompletionModel`).
 
 The trait looks like this:
@@ -186,15 +191,18 @@ For most completion model types that revolve around HTTP API calls, typically th
 Should you decide to use raw JSON instead of using a `TryFrom<T>` conversion then converting to JSON, you may need some additional helper functions for composing your JSON. While the `json_utils` module in Rig is internal (since it is not intended to be exposed as a public API), you can simply copy what functions you need from the module into your own crate.
 
 For some inspiration on writing your own streaming response functionality, here are some implementations that already exist in the Rig library:
+
 - [OpenAI Chat Completions API](https://github.com/0xPlaygrounds/rig/blob/cbf98830cd0ebd2bf5f2d9627660c8ae2c42c134/rig-core/src/providers/openai/completion/streaming.rs#L84)
 - [Gemini Completions](https://github.com/0xPlaygrounds/rig/blob/cbf98830cd0ebd2bf5f2d9627660c8ae2c42c134/rig-core/src/providers/gemini/streaming.rs#L44)
 
 ### Converting messages
+
 When writing your own integration, you will more than likely need to write your own message type (unless it has complete parity with the OpenAI message type because of OpenAI compatibility). Each internal message in Rig is either a User or Assistant message composed of one or more user or assistant content types, respectively. For example, a user message may contain text contain as well as an image URL (or base64 encoded string) to be parsed by an LLM.
 
 The most common way to solve this in the official Rig providers module is to use `TryFrom<rig::completion::Message> for Vec<T>`. However, when doing this in your own local crate(s) you may find that this is impossible to implement because of the orphan rule.
 
 There are a couple of ways to get around this:
+
 - Use a free-standing function
 - Write a trait [(coming soon!)](https://github.com/0xPlaygrounds/rig/pull/753) which emulates the `TryFrom<T>` semantics for you.
 
