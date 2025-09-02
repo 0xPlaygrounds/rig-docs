@@ -202,10 +202,12 @@ When writing your own integration, you will more than likely need to write your 
 
 The most common way to solve this in the official Rig providers module is to use `TryFrom<rig::completion::Message> for Vec<T>`. However, when doing this in your own local crate(s) you may find that this is impossible to implement because of the orphan rule.
 
+The reason why we use `Vec<T>` is that if you go to Rig's core `Message` abstraction, you can see that each user message actually has multiple content parts. While this satisfies the OpenAI, Anthropic, Gemini, etc... providers there are also many providers that are unable to use multiple content parts in one message. However, if you are in a situation where the provider message can also contain multiple parts, you can simply return a single-element `Vec<T>`.
+
 There are a couple of ways to get around this:
 
 - Use a free-standing function
-- Write a trait [(coming soon!)](https://github.com/0xPlaygrounds/rig/pull/753) which emulates the `TryFrom<T>` semantics for you.
+- Use [`rig::completion::ConvertMessage`] which emulates the `TryFrom<T>` semantics for you, but returns `Vec<Self>`.
 
 The easiest way to get around this is using a free-standing function:
 
