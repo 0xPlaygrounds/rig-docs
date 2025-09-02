@@ -207,7 +207,7 @@ The reason why we use `Vec<T>` is that if you go to Rig's core `Message` abstrac
 There are a couple of ways to get around this:
 
 - Use a free-standing function
-- Use [`rig::completion::ConvertMessage`] which emulates the `TryFrom<T>` semantics for you, but returns `Vec<Self>`.
+- Use [`rig::completion::ConvertMessage`](https://docs.rs/rig-core/latest/rig/completion/message/trait.ConvertMessage.html) which emulates the `TryFrom<T>` semantics for you, but returns `Vec<Self>`.
 
 The easiest way to get around this is using a free-standing function:
 
