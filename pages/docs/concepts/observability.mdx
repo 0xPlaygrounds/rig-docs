@@ -130,4 +130,4 @@ tracing_subscriber::registry()
 
 ## Troubleshooting
 
-- If your tool runs too quickly (<1ms), your spans may not run in order (the resulting completion might appear _before_ the tool is used, but they will have the same timestamp on your observability backend). This should not often be a problem in production however, as production workloads tend to require enough compute to solve this problem by itself.
+- If your tool runs too quickly (less than 1ms), your spans may not run in order (the resulting completion might appear _before_ the tool is used, but they will have the same timestamp on your observability backend). This should not often be a problem in production however, as production workloads tend to require enough compute to solve this problem by itself.
