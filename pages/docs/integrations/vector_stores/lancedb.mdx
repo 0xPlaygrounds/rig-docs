@@ -206,10 +206,12 @@ impl RecordBatchDeserializer for Vec<RecordBatch> {
 ## Best Practices
 
 1. **Index Creation**:
+
    - Minimum of 256 rows required for IVF-PQ indexing
    - Choose appropriate distance metrics based on your use case
 
 2. **Schema Design**:
+
    - Use appropriate data types for columns
    - Consider embedding dimension requirements
 
@@ -220,10 +222,12 @@ impl RecordBatchDeserializer for Vec<RecordBatch> {
 ## Limitations and Considerations
 
 1. **Data Size**:
+
    - Local storage is suitable for smaller datasets
    - Use cloud storage for large-scale deployments
 
 2. **Index Requirements**:
+
    - IVF-PQ index requires minimum dataset size
    - Consider memory requirements for large indices
 

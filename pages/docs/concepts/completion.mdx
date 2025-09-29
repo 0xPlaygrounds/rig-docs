@@ -135,6 +135,7 @@ let request = model.completion_request("prompt")
 ### Request Components
 
 1. **Core Elements**
+
    - Prompt text
    - System preamble
    - Chat history
@@ -142,6 +143,7 @@ let request = model.completion_request("prompt")
    - Max tokens
 
 2. **Context Management**
+
    - Document attachments
    - Metadata handling
    - Formatting controls
@@ -240,11 +242,13 @@ impl CompletionModel for CustomProvider {
 ## Best Practices
 
 1. **Interface Selection**
+
    - Use `Prompt` for simple interactions
    - Use `Chat` for conversational flows
    - Use `Completion` for fine-grained control
 
 2. **Error Handling**
+
    - Handle provider-specific errors
    - Implement graceful fallbacks
    - Log raw responses for debugging
