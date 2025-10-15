@@ -83,46 +83,14 @@ let agent = openai.agent("gpt-4")
 
 ## Key Features
 
-### Dynamic Context Resolution
+### Automatic Context Fetching
 
-The agent automatically:
+Agents can use multiple sources of context:
 
-1. Processes incoming prompts
-2. Queries vector stores for relevant context
-3. Integrates retrieved information
-4. Maintains conversation coherence
+- Static context documents (provided from `AgentBuilder::context()`). These will be appended to every single request.
+- Dynamic context fetching (provided from `AgentBuilder::dynamic_context()`). A max number of results will be fetched from a given vector store and returned to the agent.
 
-Reference:
-
-```rust filename="rig-core/src/agent.rs [171:197]"
-        let dynamic_context = stream::iter(self.dynamic_context.iter())
-            .then(|(num_sample, index)| async {
-                Ok::<_, VectorStoreError>(
-                    index
-                        .top_n(prompt, *num_sample)
-                        .await?
-                        .into_iter()
-                        .map(|(_, id, doc)| {
-                            // Pretty print the document if possible for better readability
-                            let text = serde_json::to_string_pretty(&doc)
-                                .unwrap_or_else(|_| doc.to_string());
-
-                            Document {
-                                id,
-                                text,
-                                additional_props: HashMap::new(),
-                            }
-                        })
-                        .collect::<Vec<_>>(),
-                )
-            })
-            .try_fold(vec![], |mut acc, docs| async {
-                acc.extend(docs);
-                Ok(acc)
-            })
-            .await
-            .map_err(|e| CompletionError::RequestError(Box::new(e)))?;
-```
+Documents will be automatically appended to a given provider request before it is sent.
 
 ### Tool Management
 
@@ -132,33 +100,11 @@ Agents can:
 - Resolve tool calls automatically
 - Handle tool execution and error states
 
-Reference:
+Below is an explanation of the types of tools (and tool related fields) that can be found:
 
-```rust filename="rig-core/src/agent.rs [199:221]"
-        let dynamic_tools = stream::iter(self.dynamic_tools.iter())
-            .then(|(num_sample, index)| async {
-                Ok::<_, VectorStoreError>(
-                    index
-                        .top_n_ids(prompt, *num_sample)
-                        .await?
-                        .into_iter()
-                        .map(|(_, id)| id)
-                        .collect::<Vec<_>>(),
-                )
-            })
-            .try_fold(vec![], |mut acc, docs| async {
-                for doc in docs {
-                    if let Some(tool) = self.tools.get(&doc) {
-                        acc.push(tool.definition(prompt.into()).await)
-                    } else {
-                        tracing::warn!("Tool implementation not found in toolset: {}", doc);
-                    }
-                }
-                Ok(acc)
-            })
-            .await
-            .map_err(|e| CompletionError::RequestError(Box::new(e)))?;
-```
+- `toolset`: The actual tool repository (where tools live). Contains a map of tool names as well as their respective boxed function pointers.
+- `static_tools`: Tools that will always be presented and available to use in tool definition lists when interacting with model providers.
+- `dynamic_tools`: When given dynamic toolsets (via `AgentBuilder::dynamic_tools`), agents are able to dynamically retrieve tools from a given vector store (assuming that the tools already exist in the vector store). Based on fetched results, tool definitions will be slotted into the model provider request to tell it which tools it can call.
 
 ### Additional Parameters
 
@@ -176,6 +122,22 @@ let agent = openai_client.agent("gpt-5")
     }))
     .build();
 ```
+
+### Prompt Hooks
+
+Prompt hooks are a way to be able to add customisable behaviour to the Agent prompt loop. [The technical implementation](https://docs.rs/rig-core/latest/rig/agent/trait.PromptHook.html) provides a default method implementation for every method, so you only need to implement whatever methods you'd like to add.
+
+Features:
+
+- Access completion request prompts, completion responses, tool calls and tool responses
+- You can cancel the agentic prompting loop from the agent hook (by using `CancelSignal::cancel()`). This returns a `PromptError::PromptCancelled` error, as well as the internal chat history.
+
+Use cases:
+
+- Add extra observability to your programs
+- Add any extra custom behaviour you want to the agent loop!
+
+Bear in mind that while prompt hooks are not blocking, it's generally advisable to make not your behavior too computationally intensive.
 
 ## Best Practices
 

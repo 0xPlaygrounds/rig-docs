@@ -203,6 +203,24 @@ fn calculator(x: i32, y: i32, operation: String) -> Result<i32, rig::tool::ToolE
 }
 ```
 
+## Tool Servers
+
+Traditionally, storing tools in a struct to be retrieved at will in an async context often requires the use of access patterns like `Arc<RwLock<T>>` and `Arc<Mutex<T>>`. This can potentially slow down performance from having to lock multiple times, as well as cause deadlocks.
+
+One way that we've solved in `0.22.0` and beyond is to separately run what we call "tool servers" - essentially Tokio spawned tasks that use message passing and await for messages, processes the messages and sends a message back to the tool server handle (which can be held by the Agent and used internally by it for multi-turn prompting). As long as there is at least one copy of the server handle, the server loop will run.
+
+To create a tool server, all you need to do is the following:
+
+```rust
+use rig::tool::server::{ToolServer, ToolServerHandle};
+
+let tool_server: ToolServerHandle = ToolServer::new()
+    .tool(Adder) // add a tool
+    .run();
+```
+
+Like Agents, tool servers accept static tools, dynamic tools and MCP tools (via `rmcp`). When building an Agent, you can also give it a clone of a tool server handle and it will use that server - letting you share a set of tools between multiple agents.
+
 ## Using Tools with Agents
 
 Tools can be added to agents in two ways:

@@ -17,15 +17,21 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
-    "next-env.d.ts",
+    "**/*.mdx",
     "**/*.ts",
     "**/*.tsx",
-    "**/*.mdx",
+    "next-env.d.ts",
+    "pages/examples/index.mdx",
     "tailwind.config.js",
-    "pages/examples/index.mdx"
+    ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }
