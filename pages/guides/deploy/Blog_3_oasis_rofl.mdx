@@ -1,0 +1,244 @@
+# 🚀 Deploy a Simple Rig Agent on Oasis ROFL
+
+
+## TL;DR
+
+- End-to-end steps to run a simple containerized Rig agent on Oasis ROFL using the Oasis CLI.
+- You’ll create a small HTTP service container, initialize `rofl.yaml`, register on-chain, build an `.orc` bundle, set secrets, deploy, and verify.
+- References:
+  - ROFL Quickstart and prerequisites: [docs](https://docs.oasis.io/build/rofl/quickstart/), [prerequisites](https://docs.oasis.io/build/rofl/prerequisites/)
+  - Demo app structure: [demo-rofl](https://github.com/oasisprotocol/demo-rofl)
+  - ROFL Rust client (branch): [oasis-sdk (rofl-client-rs)](https://github.com/oasisprotocol/oasis-sdk/tree/ZigaMr/feat/rofl-client-rs)
+
+> If you’re new to Rig and want more tutorials, see our [Build with Rig guide](https://rig.rs/build-with-rig-guide.html).
+
+---
+
+## What is ROFL (at a glance)
+
+ROFL is Oasis’ runtime for deploying verifiable, confidential apps on decentralized infrastructure. You:
+- Define a containerized app (via `compose.yaml`).
+- Initialize a ROFL manifest (`rofl.yaml`) and register it on-chain.
+- Build a portable `.orc` bundle and deploy it to a provisioned machine.
+- Use secrets, logs, and lifecycle commands via the Oasis CLI.
+
+See the official docs: [Quickstart](https://docs.oasis.io/build/rofl/quickstart/), [Prerequisites](https://docs.oasis.io/build/rofl/prerequisites/).
+
+---
+
+## Prerequisites
+
+- Oasis CLI installed and configured (wallet with sufficient funds for testnet/mainnet fees).
+  - Follow: [ROFL prerequisites](https://docs.oasis.io/build/rofl/prerequisites/)
+- Docker (local build).
+- An OpenAI API key (or any model provider key your Rig agent needs).
+- Your Rig application code (any simple HTTP server that accepts a prompt and returns model output).
+
+> Tip: If you need a reference project structure, check [demo-rofl](https://github.com/oasisprotocol/demo-rofl).
+
+---
+
+## 1) Create a minimal HTTP wrapper for your Rig agent
+
+Use any simple HTTP server (Rust, Node, Python). For Rust, expose an endpoint (e.g. `POST /chat`) that:
+- Reads `OPENAI_API_KEY` from env.
+- Calls your Rig agent with the user prompt.
+- Returns the model response as JSON.
+
+Keep the server listening on `0.0.0.0:8080`.
+
+> You can adapt your existing AWS Lambda Rig app into a long-running HTTP service (e.g., with `axum`) by moving the agent invocation into a per-request handler.
+
+---
+
+## 2) Containerize the service (Dockerfile)
+
+Example multi-stage Dockerfile for Rust (adjust as needed):
+
+```dockerfile
+# Build stage
+FROM rust:1.80 as builder
+WORKDIR /app
+# Cache dependencies
+COPY Cargo.toml Cargo.lock ./
+RUN mkdir src && echo "fn main() { println!(\"build placeholder\"); }" > src/main.rs
+RUN cargo build --release && rm -rf src
+
+# Build actual app
+COPY . .
+RUN cargo build --release
+
+# Runtime stage (distroless or slim)
+FROM gcr.io/distroless/cc-debian12
+WORKDIR /app
+COPY --from=builder /app/target/release/rig-rofl-app /app/rig-rofl-app
+ENV RUST_LOG=info
+EXPOSE 8080
+CMD ["/app/rig-rofl-app"]
+```
+
+- Replace `rig-rofl-app` with your actual binary name.
+- If you use another language, swap to a suitable base image and command.
+
+---
+
+## 3) Define `compose.yaml`
+
+Create a `compose.yaml` in your project root:
+
+```yaml
+version: "3.8"
+services:
+  app:
+    build: .
+    image: rig-rofl-app:local
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - "8080:8080"
+```
+
+- ROFL will use this to build the bundle and expose the service port.
+- Keep your HTTP server on port `8080` for simplicity.
+
+---
+
+## 4) Initialize ROFL manifest
+
+From your project directory (where `compose.yaml` lives):
+
+```bash
+oasis rofl init
+```
+
+This generates `rofl.yaml`. Open it and set:
+- A clear `name` and `description`.
+- Appropriate `resources` (CPU, memory, storage) for your app.
+
+> The CLI provides a valid schema; just edit the resource values to match your needs.
+
+References: [Quickstart](https://docs.oasis.io/build/rofl/quickstart/)
+
+---
+
+## 5) Create the ROFL application on-chain
+
+Choose a network (testnet recommended first):
+
+```bash
+# Register the app definition on Sapphire Testnet
+oasis rofl create --network testnet
+```
+
+- Use `--network mainnet` when ready for production.
+- Make sure your Oasis CLI wallet is set up and funded.
+
+References: [Quickstart](https://docs.oasis.io/build/rofl/quickstart/)
+
+---
+
+## 6) Build the ROFL bundle
+
+This compiles your `compose.yaml` and artifacts into a portable `.orc`:
+
+```bash
+oasis rofl build
+```
+
+You’ll see an `.orc` file output (the bundle you deploy).
+
+---
+
+## 7) Set secrets (OpenAI key)
+
+Store secrets securely with the CLI:
+
+```bash
+# The '-' reads from stdin, so the secret value is not stored in shell history
+echo -n "$OPENAI_API_KEY" | oasis rofl secret set OPENAI_API_KEY -
+```
+
+In `compose.yaml`, the environment variable is already referenced (`OPENAI_API_KEY=${OPENAI_API_KEY}`), so your app will receive it at runtime.
+
+References: [Quickstart](https://docs.oasis.io/build/rofl/quickstart/)
+
+---
+
+## 8) Deploy
+
+Provision a machine and deploy the bundle:
+
+```bash
+oasis rofl deploy --network testnet
+```
+
+By default, this will rent a compatible machine matching your requested resources and push your `.orc` there.
+
+---
+
+## 9) Verify and test
+
+- Show machine status:
+
+```bash
+oasis rofl machine show
+```
+
+- Tail logs:
+
+```bash
+oasis rofl machine logs
+```
+
+- Test your endpoint:
+  - Use the machine’s public endpoint/port from `machine show`.
+  - Example (adjust URL/host/port):
+
+```bash
+curl -sS -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"Tell me a joke about Montreal bagels"}' \
+  https://<machine-endpoint>:<port>/chat
+```
+
+---
+
+## 10) Update and roll forward
+
+Edit your code, rebuild, and redeploy:
+
+```bash
+oasis rofl build
+oasis rofl deploy --network testnet
+```
+
+(You can automate this via CI once you’re comfortable with the flow.)
+
+---
+
+## Notes on `rofl-client-rs`
+
+If you want your Rust app to communicate with ROFL-specific components (e.g., programmatic interactions, client-side helpers), see the ROFL Rust client work in the Oasis SDK branch:
+- [oasis-sdk (rofl-client-rs)](https://github.com/oasisprotocol/oasis-sdk/tree/ZigaMr/feat/rofl-client-rs/rofl-client/rs)
+
+For pure deployment, the Oasis CLI handles the lifecycle (init/create/build/deploy/secrets/logs). You only need `rofl-client-rs` if your application logic requires ROFL-aware Rust APIs.
+
+---
+
+## Troubleshooting
+
+- Build errors when bundling:
+  - Ensure `compose.yaml` builds locally: `docker compose build`.
+- App not reachable:
+  - Confirm the port in your server matches the port in `compose.yaml` (e.g., `8080`).
+  - Re-check `oasis rofl machine show` for the correct endpoint/port.
+- Missing env vars:
+  - Confirm the secret is set and the name matches the `compose.yaml` variable.
+- Insufficient funds or permissions:
+  - Ensure your Oasis CLI account is funded and the selected network is correct.
+
+Useful references:
+- ROFL quickstart: [docs](https://docs.oasis.io/build/rofl/quickstart/)
+- ROFL prerequisites: [docs](https://docs.oasis.io/build/rofl/prerequisites/)
+- Demo app structure: [demo-rofl](https://github.com/oasisprotocol/demo-rofl)
+- Rust ROFL client branch: [oasis-sdk (rofl-client-rs)](https://github.com/oasisprotocol/oasis-sdk/tree/ZigaMr/feat/rofl-client-rs)
