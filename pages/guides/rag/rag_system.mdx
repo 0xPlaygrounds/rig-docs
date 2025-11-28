@@ -1,4 +1,4 @@
-# Building a RAG System with Rig in Under 100 Lines of Code
+# Building a RAG System with Rig 0.24.0 in Under 100 Lines of Code
 
 **TL;DR:** This guide walks you through building a simple Retrieval-Augmented Generation (RAG) system in Rust using the Rig library. In under 100 lines of code, you'll create a system that extracts text from PDF documents, generates embeddings with OpenAI's API, and allows a large language model to answer questions based on the documents' content.
 
@@ -34,10 +34,10 @@ Now, let's add Rig and other required dependencies to our `Cargo.toml` file:
 [package]
 name = "rag_system"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-rig-core = "0.0.6"
+rig-core = "0.24.0"
 tokio = { version = "1.34.0", features = ["full"] }
 anyhow = "1.0.75"
 pdf-extract = "0.7.3"
@@ -45,7 +45,7 @@ pdf-extract = "0.7.3"
 
 Here's a brief explanation of each dependency:
 
-- `rig-core`: The main Rig library for building LLM applications
+- `rig-core`: The main Rig library for building LLM applications (version 0.24.0)
 - `tokio`: An asynchronous runtime for Rust
 - `anyhow`: For flexible error handling
 - `pdf-extract`: To extract text from PDF files
@@ -86,16 +86,13 @@ This code sets up our OpenAI client and defines a function to extract text from 
 
 ### Step 2: Creating the document store
 
-Next, we'll create an in-memory vector store to hold our documents:
+Next, we'll create an in-memory vector store to hold our documents. In Rig 0.24.0, the API has been simplified:
 
 ```rust
 use rig::vector_store::in_memory_store::InMemoryVectorStore;
-use rig::vector_store::VectorStore;
-
-let mut vector_store = InMemoryVectorStore::default();
 ```
 
-The `InMemoryVectorStore` is a simple vector store provided by Rig that keeps all data in memory. This is suitable for small to medium-sized document collections. For larger collections, you might want to use a persistent storage solution.
+The `InMemoryVectorStore` is a simple vector store provided by Rig that keeps all data in memory. This is suitable for small to medium-sized document collections. For larger collections, you might want to use a persistent storage solution like MongoDB, LanceDB, Neo4j, or Qdrant (available as companion crates).
 
 ### Step 3: Implementing the embedding model
 
@@ -103,6 +100,8 @@ Now comes the crucial part where we set up our embedding model and add documents
 
 ```rust
 use rig::embeddings::EmbeddingsBuilder;
+use rig::client::EmbeddingsClient;
+use rig::vector_store::InMemoryVectorStore;
 use std::env;
 
 // Create an embedding model using OpenAI's text-embedding-ada-002
@@ -126,56 +125,57 @@ let embeddings = EmbeddingsBuilder::new(embedding_model.clone())
     .build()
     .await?;
 
-// Add the embeddings to our vector store
-vector_store.add_documents(embeddings).await?;
+// Create vector store from documents
+let vector_store = InMemoryVectorStore::from_documents(embeddings);
 ```
 
 This section is where the magic happens. We're using OpenAI's `text-embedding-ada-002` model to create embeddings for our PDF documents. These embeddings are vector representations of the text that capture semantic meaning, allowing for efficient similarity searches later.
 
-We load the content of two PDF files, create embeddings for them using the `EmbeddingsBuilder`, and then add these embeddings to our vector store. This process transforms our raw text data into a format that can be quickly and effectively queried.
+**Key change in Rig 0.24.0:** Instead of creating an empty vector store and then adding documents, we now use `InMemoryVectorStore::from_documents()` to create the vector store directly from our embeddings. This is more concise and efficient.
 
 ### Step 4: Building the RAG agent
 
-With our document store populated, we can now create our RAG agent:
+With our document store populated, we can now create our RAG agent. In Rig 0.24.0, the agent builder API has changed:
 
 ```rust
-let rag_agent = openai_client.context_rag_agent("gpt-3.5-turbo")
+use rig::client::CompletionsClient;
+
+// Create an index from the vector store
+let index = vector_store.index(embedding_model);
+
+// Create RAG agent using the new API
+let rag_agent = openai_client
+    .agent("gpt-3.5-turbo")
     .preamble("You are a helpful assistant that answers questions based on the given context from PDF documents.")
-    .dynamic_context(2, vector_store.index(embedding_model))
+    .dynamic_context(2, index)
     .build();
 ```
 
-This code creates a RAG agent using OpenAI's GPT-3.5-turbo model. The `preamble` sets the behavior of our agent, and `dynamic_context(2, ...)` tells the agent to use the top 2 most relevant documents from our vector store for each query. The `vector_store.index(embedding_model)` creates an index of our vector store using our embedding model, which allows for efficient similarity searches.
+The `preamble` sets the behavior of our agent, and `dynamic_context(2, ...)` tells the agent to use the top 2 most relevant documents from our vector store for each query.
 
 ### Step 5: Using Rig's Built-in CLI Interface
 
-One of the great features of Rig is its built-in utilities that simplify common tasks. Instead of creating our own CLI interface from scratch, we can use Rig's `cli_chatbot` function:
+One of the great features of Rig is its built-in utilities that simplify common tasks. We can use Rig's `cli_chatbot` function to create an interactive interface:
 
 ```rust
 use rig::cli_chatbot::cli_chatbot;
-
-// Create RAG agent
-let rag_agent = openai_client.context_rag_agent("gpt-3.5-turbo")
-    .preamble("You are a helpful assistant that answers questions based on the given context from PDF documents.")
-    .dynamic_context(2, vector_store.index(embedding_model))
-    .build();
 
 // Use the cli_chatbot function to create the CLI interface
 cli_chatbot(rag_agent).await?;
 ```
 
-This simple change not only reduces our code but also provides a more robust CLI interface with built-in chat history functionality.
+This simple function call provides a robust CLI interface with built-in chat history functionality.
 
 ## Putting It All Together
 
-Now that we've gone through each component, let's look at the complete code for our RAG system:
+Now that we've gone through each component, let's look at the complete code for our RAG system using Rig 0.24.0:
 
 ```rust
 use rig::providers::openai;
 use rig::vector_store::in_memory_store::InMemoryVectorStore;
-use rig::vector_store::VectorStore;
 use rig::embeddings::EmbeddingsBuilder;
-use rig::cli_chatbot::cli_chatbot;  // Import the cli_chatbot function
+use rig::client::{EmbeddingsClient, CompletionsClient};
+use rig::cli_chatbot::cli_chatbot;
 use std::path::Path;
 use anyhow::{Result, Context};
 use pdf_extract::extract_text;
@@ -191,9 +191,6 @@ async fn main() -> Result<()> {
     let openai_client = openai::Client::from_env();
     let embedding_model = openai_client.embedding_model("text-embedding-ada-002");
 
-    // Create vector store
-    let mut vector_store = InMemoryVectorStore::default();
-
     // Get the current directory and construct paths to PDF files
     let current_dir = std::env::current_dir()?;
     let documents_dir = current_dir.join("documents");
@@ -205,19 +202,23 @@ async fn main() -> Result<()> {
     let pdf1_content = load_pdf_content(&pdf1_path)?;
     let pdf2_content = load_pdf_content(&pdf2_path)?;
 
-    // Create embeddings and add to vector store
+    // Create embeddings and vector store
     let embeddings = EmbeddingsBuilder::new(embedding_model.clone())
         .simple_document("Moores_Law_for_Everything", &pdf1_content)
         .simple_document("The_Last_Question", &pdf2_content)
         .build()
         .await?;
 
-    vector_store.add_documents(embeddings).await?;
+    let vector_store = InMemoryVectorStore::from_documents(embeddings);
+
+    // Create index
+    let index = vector_store.index(embedding_model);
 
     // Create RAG agent
-    let rag_agent = openai_client.context_rag_agent("gpt-3.5-turbo")
+    let rag_agent = openai_client
+        .agent("gpt-3.5-turbo")
         .preamble("You are a helpful assistant that answers questions based on the given context from PDF documents.")
-        .dynamic_context(2, vector_store.index(embedding_model))
+        .dynamic_context(2, index)
         .build();
 
     // Use the cli_chatbot function to create the CLI interface
@@ -227,7 +228,7 @@ async fn main() -> Result<()> {
 }
 ```
 
-That's it! we've built a functional RAG system in less than 100 lines of Rust code. It handles PDF extraction, embedding creation, vector storage, and interaction with OpenAI's GPT model, all while leveraging Rig's built-in CLI interface for a smooth user experience.
+That's it! We've built a functional RAG system in less than 100 lines of Rust code. It handles PDF extraction, embedding creation, vector storage, and interaction with OpenAI's GPT model, all while leveraging Rig's built-in CLI interface for a smooth user experience.
 
 ## Running and Testing the RAG System
 
@@ -263,7 +264,7 @@ Isaac Asimov's story "The Last Question" explores the theme of entropy and the e
 ================================================================
 
 
-> how does the ideas of both texts relate to eachother?
+> how do the ideas of both texts relate to each other?
 ========================== Response ============================
 Both texts, "Moore's Law for Everything" by Sam Altman and "The Last Question" by Isaac Asimov, touch upon the theme of technological advancement and its potential implications for society and the universe.
 
@@ -273,8 +274,6 @@ On the other hand, "The Last Question" delves into the concept of entropy and th
 
 Both texts address the transformative power of technology, raising questions about the long-term implications and ethical considerations surrounding technological progress. They explore themes of societal adaptation, resource management, and the inevitability of change in the face of advancing technology and cosmic forces.
 ================================================================
-
-
 ```
 
 Let's break down what we're looking at:
@@ -307,11 +306,25 @@ Seeing these examples, you might start to imagine the potential applications of 
 
 The possibilities are vast, and with Rig, implementing these applications becomes much more accessible.
 
+## What's New in Rig 0.24.0?
+
+Rig 0.24.0 brings several improvements to the API that make building RAG systems even more straightforward:
+
+1. **Simplified Agent Builder**: The `.agent()` method provides a more consistent interface across all agent types, whether they use RAG, tools, or both.
+
+2. **Improved Vector Store Initialization**: The `InMemoryVectorStore::from_documents()` method allows you to create and populate a vector store in one step.
+
+3. **Better Type Safety**: Enhanced type system ensures compile-time correctness in LLM interactions.
+
+4. **Expanded Provider Support**: Rig 0.24.0 supports 20+ model providers under one unified interface, including OpenAI, Anthropic, Cohere, Google Gemini, xAI, and DeepSeek.
+
+5. **GenAI Semantic Convention Compatibility**: Full support for observability and tracing in LLM applications.
+
 ## Deploying to Production
 
 While our current implementation is suitable for local testing and small-scale use, there are several considerations to keep in mind when deploying such a system to production:
 
-1. **Scalability**: For larger document collections, consider using a dedicated vector store instead of the in-memory store. Rig currently supports MongoDB with other Vector stores in the roadmap. If you want to implement a specific vector store or have a request for one, please visit the [Rig Repo](https://github.com/0xPlaygrounds/rig) and submit an issue.
+1. **Scalability**: For larger document collections, consider using a dedicated vector store instead of the in-memory store. Rig 0.24.0 supports MongoDB, LanceDB, Neo4j, and Qdrant through companion crates. Visit the [Rig Repository](https://github.com/0xPlaygrounds/rig) to explore these options.
 
 2. **Document Processing**: Implement more robust PDF parsing, including error handling for corrupted files and support for other document formats. You might want to use a dedicated document processing pipeline.
 
@@ -319,10 +332,24 @@ While our current implementation is suitable for local testing and small-scale u
 
 4. **Security**: Ensure proper handling of API keys and sensitive information, especially if processing confidential documents. Use environment variables and secure vaults for storing secrets.
 
-5. **Monitoring and Logging**: Implement comprehensive logging and monitoring to track system performance and user interactions. This will help in debugging and improving the system over time.
+5. **Monitoring and Logging**: Implement comprehensive logging and monitoring to track system performance and user interactions. Rig 0.24.0 includes built-in support for OpenTelemetry and platforms like Langfuse.
 
 6. **Rate Limiting**: Implement rate limiting to manage API usage and prevent abuse. This is crucial both for cost management and to comply with API provider terms of service.
 
 7. **Asynchronous Processing**: For handling large documents or many concurrent users, consider implementing asynchronous processing with a job queue.
 
-By addressing these considerations, you can turn this proof-of-concept into a robust, production-ready system. In a future guide, i'll walk you through deploying a RAG system built with Rig to production, subscribe to my blog or join our community to be notified.
+8. **Model Selection**: Consider upgrading to GPT-4 or other more capable models for production use, as they provide better reasoning and more accurate responses.
+
+By addressing these considerations, you can turn this proof-of-concept into a robust, production-ready system.
+
+## Next Steps
+
+Now that you've built a basic RAG system with Rig 0.24.0, here are some ways to extend and improve it:
+
+- **Add Document Chunking**: Split large documents into smaller chunks for more precise retrieval
+- **Implement Multi-Modal RAG**: Add support for images and other media types
+- **Add Tools**: Give your agent access to external tools like calculators, web search, or APIs
+- **Experiment with Different Models**: Try different embedding models and LLMs to find the best performance for your use case
+- **Build a Web Interface**: Replace the CLI with a web-based UI using a framework like Actix-web or Rocket
+
+The Rig ecosystem is continuously growing, and the community is active on [Discord](https://discord.gg/playgrounds) and [GitHub](https://github.com/0xPlaygrounds/rig). Join us to share your projects, get help, and contribute to the future of LLM development in Rust!
