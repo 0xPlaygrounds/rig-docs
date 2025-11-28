@@ -158,10 +158,12 @@ The `preamble` sets the behavior of our agent, and `dynamic_context(2, ...)` tel
 One of the great features of Rig is its built-in utilities that simplify common tasks. We can use Rig's `cli_chatbot` function to create an interactive interface:
 
 ```rust
-use rig::cli_chatbot::cli_chatbot;
+use rig::integrations::cli_chatbot::ChatBotBuilder;
 
-// Use the cli_chatbot function to create the CLI interface
-cli_chatbot(rag_agent).await?;
+// Create a CLI chatbot from the agent
+let chatbot = ChatBotBuilder::new().agent(rag_agent).build();
+
+chatbot.run().await?;
 ```
 
 This simple function call provides a robust CLI interface with built-in chat history functionality.
@@ -172,6 +174,7 @@ Now that we've gone through each component, let's look at the complete code for 
 
 ```rust
 use rig::providers::openai;
+use rig::integrations::cli_chatbot::ChatBotBuilder;
 use rig::vector_store::in_memory_store::InMemoryVectorStore;
 use rig::embeddings::EmbeddingsBuilder;
 use rig::client::{EmbeddingsClient, CompletionsClient};
@@ -221,8 +224,10 @@ async fn main() -> Result<()> {
         .dynamic_context(2, index)
         .build();
 
-    // Use the cli_chatbot function to create the CLI interface
-    cli_chatbot(rag_agent).await?;
+    // Create a CLI chatbot from the agent
+    let chatbot = ChatBotBuilder::new().agent(rag_agent).build();
+    
+    chatbot.run().await?;
 
     Ok(())
 }
@@ -306,20 +311,6 @@ Seeing these examples, you might start to imagine the potential applications of 
 
 The possibilities are vast, and with Rig, implementing these applications becomes much more accessible.
 
-## What's New in Rig 0.24.0?
-
-Rig 0.24.0 brings several improvements to the API that make building RAG systems even more straightforward:
-
-1. **Simplified Agent Builder**: The `.agent()` method provides a more consistent interface across all agent types, whether they use RAG, tools, or both.
-
-2. **Improved Vector Store Initialization**: The `InMemoryVectorStore::from_documents()` method allows you to create and populate a vector store in one step.
-
-3. **Better Type Safety**: Enhanced type system ensures compile-time correctness in LLM interactions.
-
-4. **Expanded Provider Support**: Rig 0.24.0 supports 20+ model providers under one unified interface, including OpenAI, Anthropic, Cohere, Google Gemini, xAI, and DeepSeek.
-
-5. **GenAI Semantic Convention Compatibility**: Full support for observability and tracing in LLM applications.
-
 ## Deploying to Production
 
 While our current implementation is suitable for local testing and small-scale use, there are several considerations to keep in mind when deploying such a system to production:
@@ -341,15 +332,3 @@ While our current implementation is suitable for local testing and small-scale u
 8. **Model Selection**: Consider upgrading to GPT-4 or other more capable models for production use, as they provide better reasoning and more accurate responses.
 
 By addressing these considerations, you can turn this proof-of-concept into a robust, production-ready system.
-
-## Next Steps
-
-Now that you've built a basic RAG system with Rig 0.24.0, here are some ways to extend and improve it:
-
-- **Add Document Chunking**: Split large documents into smaller chunks for more precise retrieval
-- **Implement Multi-Modal RAG**: Add support for images and other media types
-- **Add Tools**: Give your agent access to external tools like calculators, web search, or APIs
-- **Experiment with Different Models**: Try different embedding models and LLMs to find the best performance for your use case
-- **Build a Web Interface**: Replace the CLI with a web-based UI using a framework like Actix-web or Rocket
-
-The Rig ecosystem is continuously growing, and the community is active on [Discord](https://discord.gg/playgrounds) and [GitHub](https://github.com/0xPlaygrounds/rig). Join us to share your projects, get help, and contribute to the future of LLM development in Rust!
