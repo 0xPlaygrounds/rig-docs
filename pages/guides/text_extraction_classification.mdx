@@ -241,14 +241,14 @@ Next, we'll create a named entity recognizer that identifies people, organizatio
 ### Defining Data Structures
 
 ```rust
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
 enum EntityType {
     Person,
     Organization,
     Location,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
 struct Entity {
     text: String,
     entity_type: EntityType,
@@ -256,7 +256,7 @@ struct Entity {
     end: usize,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
 struct ExtractedEntities {
     entities: Vec<Entity>,
 }
@@ -304,7 +304,7 @@ Let's combine both tasks into a unified system that performs sentiment analysis 
 ### Defining the Combined Data Structure
 
 ```rust
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
 struct TextAnalysis {
     sentiment: SentimentClassification,
     entities: Vec<Entity>,
@@ -374,7 +374,7 @@ Let's build a news article analyzer that classifies the article's topic, extract
 ### Defining Data Structures
 
 ```rust
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
 enum Topic {
     Politics,
     Technology,
@@ -383,7 +383,7 @@ enum Topic {
     Other(String),
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
 struct NewsArticleAnalysis {
     topic: Topic,
     sentiment: SentimentClassification,
