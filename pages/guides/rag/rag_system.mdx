@@ -226,7 +226,7 @@ async fn main() -> Result<()> {
 
     // Create a CLI chatbot from the agent
     let chatbot = ChatBotBuilder::new().agent(rag_agent).build();
-    
+
     chatbot.run().await?;
 
     Ok(())
