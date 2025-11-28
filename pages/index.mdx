@@ -450,24 +450,24 @@ implement the [VectorStoreIndex](crate::vector_store::VectorStoreIndex) trait.
 ## Simple example:
 
 ```rust
-  use rig::{completion::Prompt, providers::openai};
+use rig::{completion::Prompt, providers::openai};
 
-  #[tokio::main]
-  async fn main() {
-      // Create OpenAI client and agent.
-      // This requires the `OPENAI_API_KEY` environment variable to be set.
-      let openai_client = openai::Client::from_env();
+#[tokio::main]
+async fn main() {
+    // Create OpenAI client and agent.
+    // This requires the `OPENAI_API_KEY` environment variable to be set.
+    let openai_client = openai::Client::from_env();
 
-      let gpt4 = openai_client.agent("gpt-4").build();
+    let gpt4 = openai_client.agent("gpt-4").build();
 
-      // Prompt the model and print its response
-      let response = gpt4
-          .prompt("Who are you?")
-          .await
-          .expect("Failed to prompt GPT-4");
+    // Prompt the model and print its response
+    let response = gpt4
+        .prompt("Who are you?")
+        .await
+        .expect("Failed to prompt GPT-4");
 
-      println!("GPT-4: {response}");
-  }
+    println!("GPT-4: {response}");
+}
 ```
 
 Note: using `#[tokio::main]{:rust}` requires you enable tokio's `macros{:yaml}` and `rt-multi-thread{:yaml}` features
