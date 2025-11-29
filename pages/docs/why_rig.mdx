@@ -115,10 +115,12 @@ This result shows that Rig's vector store successfully retrieved the most semant
 Rig provides high-level abstractions for building complex LLM applications, including agents and Retrieval-Augmented Generation (RAG) systems. Here's an example of setting up a RAG system with Rig:
 
 ```rust
-use rig::providers::openai;
-use rig::embeddings::EmbeddingsBuilder;
-use rig::vector_store::{in_memory_store::InMemoryVectorStore, VectorStore};
-use rig::completion::Prompt;
+use rig::{
+    client::EmbeddingsClient,
+    embeddings::EmbeddingsBuilder,
+    providers::openai,
+    vector_store::{VectorSearchRequest, VectorStoreIndex, in_memory_store::InMemoryVectorStore},
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -129,28 +131,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create an in-memory vector store
     let mut vector_store = InMemoryVectorStore::default();
 
-    // Generate embeddings for two documents about Rust
+    // Generate embeddings for two documents
     let embeddings = EmbeddingsBuilder::new(embedding_model.clone())
-        .simple_document("doc1", "Rust was initially designed by Graydon Hoare at Mozilla Research.")
-        .simple_document("doc2", "Rust's first stable release (1.0) was on May 15, 2015.")
+        .documents(vec![
+            "1. Rust is a systems programming language.",
+            "2. Python is known for its simplicity.",
+        ])?
         .build()
         .await?;
 
     // Add the embeddings to the vector store
-    vector_store.add_documents(embeddings).await?;
+    vector_store.add_documents(embeddings);
 
     // Create an index from the vector store
     let index = vector_store.index(embedding_model);
+    let req = VectorSearchRequest::builder()
+        .samples(1)
+        .query("What is Rust?")
+        .build()?;
+    let results = VectorStoreIndex::top_n::<String>(&index, req).await?;
 
-    // Create a RAG agent using GPT-4 with the vector store as context
-    let rag_agent = openai_client.context_rag_agent("gpt-4")
-        .preamble("You are an assistant that answers questions about Rust programming language.")
-        .dynamic_context(1, index)
-        .build();
-
-    // Use the RAG agent to answer a question about Rust
-    let response = rag_agent.prompt("When was Rust's first stable release?").await?;
-    println!("RAG Agent Response: {}", response);
+    // Print the most relevant document
+    println!("Most relevant document: {:?}", results[0].2);
 
     Ok(())
 }
