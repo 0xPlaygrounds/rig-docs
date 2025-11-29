@@ -34,6 +34,13 @@ This project additionally uses `pnpm`, so you will want to ensure this is instal
 
 ## Developing
 
+### Pre-requisites
+
+Before you get started, you'll want the following installed:
+
+- Node.js v18
+- `pnpm` (install via `npm i -g pnpm` if not installed)
+
 ### Setup
 
 To run the docs locally:
