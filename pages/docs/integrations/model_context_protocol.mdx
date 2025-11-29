@@ -79,3 +79,69 @@ let agent = completion_model
 let response = agent.prompt("Add 10 + 10").await?;
 tracing::info!("Agent response: {:?}", response);
 ```
+
+## Creating Your Own MCP Server
+
+Building your own MCP server with `rmcp` allows you to expose custom tools that AI agents can discover and use. By including the server and client in a single program, you can also additionally use techniques like spawning a Tokio task for the MCP server then connect to it from the client in the main program.
+
+### Installing Dependencies
+
+To create an MCP server, ensure you have the server features enabled:
+
+```bash
+cargo add rmcp -F server,macros,transport-streamable-http-server
+cargo add tokio -F full
+```
+
+### Defining Your Server
+
+Create a server struct and define the tools you want to expose using the `#[server]` macro:
+
+```rust
+use rmcp::prelude::*;
+
+#[derive(Server)]
+#[server(
+    name = "my-calculator-server",
+    version = "1.0.0"
+)]
+struct CalculatorServer;
+
+#[server_impl]
+impl CalculatorServer {
+    #[tool(description = "Add two numbers together")]
+    async fn add(&self, a: f64, b: f64) -> Result<f64> {
+        Ok(a + b)
+    }
+
+    #[tool(description = "Multiply two numbers")]
+    async fn multiply(&self, a: f64, b: f64) -> Result<f64> {
+        Ok(a * b)
+    }
+}
+```
+
+### Running the Server
+
+Once you've defined your server, start it on a specific port:
+
+```rust
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let server = CalculatorServer;
+
+    let transport = rmcp::transport::StreamableHttpServerTransport::new(
+        "127.0.0.1:8080".parse()?
+    );
+
+    server.serve(transport).await?;
+
+    Ok(())
+}
+```
+
+Your MCP server is now running and ready to accept connections from MCP clients! The server will automatically handle tool discovery, capability negotiation, and tool invocations according to the MCP protocol.
+
+### Next Steps
+
+With your server running on `http://localhost:8080`, you can now connect to it using the MCP client code shown earlier in this guide. The tools you've defined will be automatically discovered and made available to your AI agents.
