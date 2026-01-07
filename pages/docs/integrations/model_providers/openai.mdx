@@ -54,7 +54,6 @@ let embedder = client.embedding_model(openai::TEXT_EMBEDDING_3_LARGE);
 1. **Tool Calling**: OpenAI models support function calling through a specialized JSON format. The provider automatically handles conversion between Rig's tool definitions and OpenAI's expected format.
 
 2. **Response Processing**: The provider implements special handling for:
-
    - Tool/function call responses
    - System messages
    - Token usage tracking
