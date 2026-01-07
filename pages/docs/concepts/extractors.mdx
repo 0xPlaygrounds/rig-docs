@@ -130,13 +130,11 @@ impl<T: JsonSchema + for<'a> Deserialize<'a> + Serialize + Send + Sync> Tool for
 ## Best Practices
 
 1. **Structure Design**
-
    - Use `Option<T>` for optional fields
    - Keep structures focused and minimal
    - Document field requirements
 
 2. **Error Handling**
-
    - Handle both extraction and deserialization errors
    - Provide fallback values where appropriate
    - Log extraction failures for debugging
