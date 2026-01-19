@@ -152,7 +152,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let results = VectorStoreIndex::top_n::<String>(&index, req).await?;
 
     // Print the most relevant document
-    println!("Most relevant document: {:?}", results[0].2);
+    println!("RAG Agent Response: {}", results[0]);
 
     Ok(())
 }
