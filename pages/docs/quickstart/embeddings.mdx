@@ -25,6 +25,7 @@ Below is an example of how you can use `rig` to embed some simple documents.
 
 ```rust
 use rig::{embeddings::EmbeddingsBuilder, providers::openai};
+use rig::client::{EmbeddingsClient, ProviderClient};
 
 // Create OpenAI client and model
 // This requires the `OPENAI_API_KEY` environment variable to be set.
