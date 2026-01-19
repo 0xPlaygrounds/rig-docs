@@ -62,7 +62,7 @@ impl Tool for Adder {
 Then you can call it with your agent during the builder method like so:
 
 ```rust
-// Create agent with a single context prompt and two tools
+// Create agent with a single context prompt and add a tool
 let calculator_agent = openai_client
     .agent(providers::openai::GPT_4O)
     .preamble("You are a calculator here to help the user perform arithmetic operations. Use the tools provided to answer the user's question.")
