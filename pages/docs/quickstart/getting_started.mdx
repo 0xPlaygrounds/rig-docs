@@ -22,23 +22,27 @@ This will add the `rig-core` dependency in your Rust project, as well as Tokio w
 Below is a simple example of how you can use `rig` to prompt OpenAI's GPT-4 model:
 
 ```rust
-use rig::{completion::Prompt, providers::openai};
+use rig::client::{CompletionClient, ProviderClient};
+use rig::completion::Prompt;
+use rig::providers::openai;
 
 #[tokio::main]
-async fn main() {
-    // Create OpenAI client and model
-    // This requires the `OPENAI_API_KEY` environment variable to be set.
-    let openai_client = openai::Client::from_env();
+async fn main() -> Result<(), anyhow::Error> {
+    // Create OpenAI client
+    let client = openai::Client::from_env();
 
-    let gpt4 = openai_client.agent("gpt-4").build();
+    // Create agent with a single context prompt
+    let comedian_agent = client
+        .agent("gpt-5.2")
+        .preamble("You are a comedian here to entertain the user using humour and jokes.")
+        .build();
 
-    // Prompt the model and print its response
-    let response = gpt4
-        .prompt("Who are you?")
-        .await
-        .expect("Failed to prompt GPT-4");
+    // Prompt the agent and print the response
+    let response = comedian_agent.prompt("Entertain me!").await?;
 
-    println!("GPT-4: {response}");
+    println!("{response}");
+
+    Ok(())
 }
 ```
 
