@@ -1,54 +1,119 @@
 ---
 title: Observability
-description: This section contains information about observability in Rig.
+description: Understand and debug your Rig applications using logs, traces, and GenAI observability tools like Langfuse.
 ---
 
 ## What is observability?
 
-Simply put: observability is how well you can understand the inner workings and behaviour of your application given a situation. There's many ways you can increase observability, and it can encompass a broad range of actions:
+Observability is how well you can understand what your application is doing _from the outside_, without adding ad-hoc debug code everywhere.
 
-- Logging messages (for example, model provider inputs/outputs)
-- Using `println!` to debug an object
-- Collecting the metrics of your application to compare in the future
-- Using a platform like Grafana to collect and analyse logs, metrics and traces
+In practice, this can include:
 
-Rig primarily uses `tracing` for traces and spans.
+- Logging messages (for example, model inputs and outputs)
+- Printing values to the console while debugging
+- Collecting metrics such as latency or token usage
+- Capturing structured traces that show how requests flow through your system
 
-## How observable is Rig?
+Rig focuses primarily on **structured traces and logs** via the [`tracing`](https://docs.rs/tracing) ecosystem.
 
-Rig aims to be fully compatible with [OpenTelemetry GenAI Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/). This allows you to use a wide range of backends that are compatible with the aforementioned conventioned, such as:
+---
 
-- Langfuse
-- Arize Phoenix
-- and more!
+## What observability gives you in Rig
 
-More specifically, we support instrumenting completions (whether streamed or not) with your own spans as well as providing our own by default.
+Rig emits structured telemetry that allows you to:
 
-We also have full support for providing tracing spans for Agents, whether you are using regular multi-turn prompting or streamed. Due to limitations in `tracing` being unable to change span names, the default span names have been set to the operation name. However, you can change this in your OTel collector. See [Setting up your OTel collector config](#setting-up-your-otel-collector-config) for more information.
+- Inspect **model prompts and responses**
+- Understand **agent behaviour across multiple turns**
+- See **tool calls and their outputs**
+- Debug **streaming vs non-streaming completions**
+- Compare latency and behaviour over time
 
-Currently, content capturing is enabled by default - so whatever observability backend you are using will be able to see all message contents.
+Rig follows the [**OpenTelemetry GenAI Semantic Conventions**](https://opentelemetry.io/docs/specs/semconv/gen-ai/), which makes it compatible with modern GenAI observability platforms such as:
 
-Please reach out to us if you would like any feature additions or changes when it comes to observability as it is still relatively experimental. You can do so by [joining our discord.](discord.gg/playgrounds)
+- [Langfuse](https://langfuse.com/)
+- [Arize Phoenix](https://phoenix.arize.com/)
+- Other OpenTelemetry-compatible backends
 
-## Setting up your OTel collector config
+---
 
-When setting up your OpenTelemetry config, you may find the following example helpful as a reference:
+## The easiest way to get started (recommended)
+
+If you just want to _see what Rig is doing_, the fastest path is **Langfuse**.
+
+Rig works out-of-the-box with Langfuse using OpenTelemetry, and you can integrate it **without running an OpenTelemetry Collector**.
+
+### Using `opentelemetry_langfuse` (no collector required)
+
+This setup is ideal for local development and most production workloads.
+
+Add the following dependencies:
+
+```toml
+[dependencies]
+opentelemetry = "0.31"
+opentelemetry_langfuse = "0.6"
+tracing-opentelemetry = "0.31"
+tracing-subscriber = "0.3"
+```
+
+Then initialise tracing like this:
+
+```rust
+use opentelemetry_langfuse::LangfuseTracer;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+fn init_tracing() {
+    let langfuse_public_key = std::env::var("LANGFUSE_PUBLIC_KEY").expect("LANGFUSE_PUBLIC_KEY not set");
+    let langfuse_secret_key = std::env::var("LANGFUSE_SECRET_KEY").expect("LANGFUSE_SECRET_KEY not set");
+    let tracer = LangfuseTracer::builder()
+        .with_public_key(langfuse_public_key)
+        .with_secret_key(langfuse_secret_key)
+        .with_host("https://cloud.langfuse.com")
+        .build()
+        .expect("failed to create Langfuse tracer");
+
+    tracing_subscriber::registry()
+        .with(tracing_opentelemetry::layer().with_tracer(tracer))
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+}
+```
+
+Once this is set up, model calls, agent invocations, multi-turn agent loops and tool executions will automatically appear in the Langfuse UI.
+
+---
+
+## Agent span naming and customisation
+
+By default, agent spans use a generic name such as `invoke_agent`.
+
+This is due to a limitation in `tracing`: span names cannot be changed after creation.
+
+However, Rig attaches attributes like:
+
+- `gen_ai.agent.name`
+- `gen_ai.operation.name`
+
+You can use these attributes to rename spans **in your observability backend**.
+
+---
+
+## Setting up an OpenTelemetry Collector (advanced)
+
+You only need an OpenTelemetry Collector if:
+
+- You want to forward telemetry to multiple backends
+- You already run OTel infrastructure
+- You want custom processing or redaction
+
+Below is a minimal example that receives traces over OTLP HTTP and exports them to Langfuse.
 
 ```yaml
 receivers:
   otlp:
     protocols:
       http:
-        # this is the default endpoint
         endpoint: 0.0.0.0:4318
-
-processors:
-  transform:
-    trace_statements:
-      - context: span
-        statements:
-          # Rename span if it's "invoke_agent" and has an agent attribute
-          - set(name, attributes["gen_ai.agent.name"]) where name == "invoke_agent" and attributes["gen_ai.agent.name"] != nil
 
 exporters:
   otlphttp/langfuse:
@@ -64,27 +129,31 @@ service:
       exporters: [otlphttp/langfuse]
 ```
 
-You can see we do the following:
+This configuration:
 
-- Set up an endpoint to collect traces from a HTTP endpoint at port 4318
-- Transform span names so that any `invoke_agent` spans (where an agent multi-turn prompt starts) instead change to the name of the Agent being ran
-- Exports transformed traces/spans to Langfuse
+- Accepts OTLP traces on port `4318`
+- Renames agent spans using their agent name
+- Exports traces to Langfuse
 
-## I don't want spans!
+---
 
-If you just want to see logs instead of entire spans, you can do so by writing your own subscriber layer (assuming you're using `tracing_subscriber`).
+## I don’t want spans, just logs
 
-Below is an example of a layer that only outputs the message itself without any of the span fields or metadata.
+That’s completely fine.
+
+Because Rig uses `tracing`, you can ignore spans entirely and only output log messages.
+
+Below is an example `tracing_subscriber` layer that prints **only the log message**, without span metadata.
 
 ```rust
 #[derive(Clone)]
 struct MessageOnlyLayer;
 
-impl<S> Layer<S> for MessageOnlyLayer
+impl<S> tracing_subscriber::Layer<S> for MessageOnlyLayer
 where
-    S: Subscriber + for<'a> LookupSpan<'a>,
+    S: tracing::Subscriber + for<'a> tracing_subscriber::registry::LookupSpan<'a>,
 {
-    fn on_event(&self, event: &tracing::Event<'_>, _ctx: Context<'_, S>) {
+    fn on_event(&self, event: &tracing::Event<'_>, _ctx: tracing_subscriber::layer::Context<'_, S>) {
         use tracing::field::{Field, Visit};
 
         struct MessageVisitor {
@@ -106,28 +175,32 @@ where
             let msg = msg.trim_matches('"');
             let metadata = event.metadata();
 
-            let colored_level = match metadata.level() {
-                &tracing::Level::TRACE => "\x1b[35mTRACE\x1b[0m", // Purple
-                &tracing::Level::DEBUG => "\x1b[34mDEBUG\x1b[0m", // Blue
-                &tracing::Level::INFO => "\x1b[32m INFO\x1b[0m",  // Green
-                &tracing::Level::WARN => "\x1b[33m WARN\x1b[0m",  // Yellow
-                &tracing::Level::ERROR => "\x1b[31mERROR\x1b[0m", // Red
+            let level = match metadata.level() {
+                &tracing::Level::TRACE => "TRACE",
+                &tracing::Level::DEBUG => "DEBUG",
+                &tracing::Level::INFO  => "INFO",
+                &tracing::Level::WARN  => "WARN",
+                &tracing::Level::ERROR => "ERROR",
             };
-            let _ = writeln!(std::io::stdout(), "{colored_level} {msg}");
+
+            let _ = writeln!(std::io::stdout(), "{level} {msg}");
         }
     }
 }
 ```
 
-To use, you would ideally place it after an `EnvFilter` like so:
+Use it like this:
 
 ```rust
 tracing_subscriber::registry()
-    .with(EnvFilter::new("info"))
+    .with(tracing_subscriber::EnvFilter::new("info"))
     .with(MessageOnlyLayer)
     .init();
 ```
 
+---
+
 ## Troubleshooting
 
-- If your tool runs too quickly (less than 1ms), your spans may not run in order (the resulting completion might appear _before_ the tool is used, but they will have the same timestamp on your observability backend). This should not often be a problem in production however, as production workloads tend to require enough compute to solve this problem by itself.
+- **Spans appear out of order**
+  If an operation completes in under ~1ms, some backends may display spans slightly out of order due to timestamp resolution. This is usually not an issue in real production workloads.
