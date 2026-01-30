@@ -16,8 +16,6 @@ In practice, this can include:
 
 Rig focuses primarily on **structured traces and logs** via the [`tracing`](https://docs.rs/tracing) ecosystem.
 
----
-
 ## What observability gives you in Rig
 
 Rig emits structured telemetry that allows you to:
@@ -33,8 +31,6 @@ Rig follows the [**OpenTelemetry GenAI Semantic Conventions**](https://opentelem
 - [Langfuse](https://langfuse.com/)
 - [Arize Phoenix](https://phoenix.arize.com/)
 - Other OpenTelemetry-compatible backends
-
----
 
 ## The easiest way to get started (recommended)
 
@@ -81,8 +77,6 @@ fn init_tracing() {
 
 Once this is set up, model calls, agent invocations, multi-turn agent loops and tool executions will automatically appear in the Langfuse UI.
 
----
-
 ## Agent span naming and customisation
 
 By default, agent spans use a generic name such as `invoke_agent`.
@@ -95,8 +89,6 @@ However, Rig attaches attributes like:
 - `gen_ai.operation.name`
 
 You can use these attributes to rename spans **in your observability backend**.
-
----
 
 ## Setting up an OpenTelemetry Collector (advanced)
 
@@ -134,8 +126,6 @@ This configuration:
 - Accepts OTLP traces on port `4318`
 - Renames agent spans using their agent name
 - Exports traces to Langfuse
-
----
 
 ## I don’t want spans, just logs
 
@@ -197,8 +187,6 @@ tracing_subscriber::registry()
     .with(MessageOnlyLayer)
     .init();
 ```
-
----
 
 ## Troubleshooting
 
