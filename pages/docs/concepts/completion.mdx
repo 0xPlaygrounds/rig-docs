@@ -320,6 +320,7 @@ impl CompletionModel for CustomProvider {
 ## Best Practices
 
 1. **Interface Selection**
+
    - Use `Prompt` for simple interactions
    - Use `Chat` for conversational flows
    - Use `TypedPrompt` for structured data extraction
@@ -327,6 +328,7 @@ impl CompletionModel for CustomProvider {
    - Use `StreamingPrompt`/`StreamingChat` when you need incremental output
 
 2. **Error Handling**
+
    - Handle provider-specific errors
    - Implement graceful fallbacks
    - Log raw responses for debugging

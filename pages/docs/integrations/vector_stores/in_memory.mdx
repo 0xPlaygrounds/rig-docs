@@ -314,11 +314,13 @@ Vector store operations can produce errors via the `VectorStoreError` enum:
 ## Best Practices
 
 1. **Memory Management**:
+
    - Monitor memory usage with large datasets
    - Consider chunking large document additions
    - Use cloud-based vector stores for production deployments
 
 2. **Document Structure**:
+
    - Keep documents serializable
    - Avoid extremely large arrays
    - Consider using custom ID generation for meaningful identifiers
@@ -332,11 +334,13 @@ Vector store operations can produce errors via the `VectorStoreError` enum:
 ## Limitations
 
 1. **Scalability**:
+
    - Limited by available RAM
    - No persistence between program runs
    - Single-machine only
 
 2. **Features**:
+
    - Filtering support is basic compared to dedicated vector databases
    - No automatic persistence
 
