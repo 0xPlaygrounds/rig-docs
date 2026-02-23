@@ -92,13 +92,11 @@ qdrant.insert_documents(embeddings).await?;
 ## Best Practices
 
 1. **Document Preparation**
-
    - Clean and normalize text before embedding
    - Consider chunking large documents
    - Remove irrelevant embedding content
 
 2. **Error Handling**
-
    - Handle provider API errors gracefully
    - Validate vector dimensions
    - Check for empty or invalid input

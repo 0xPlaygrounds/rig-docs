@@ -16,13 +16,11 @@ Agents in Rig provide a high-level abstraction for working with LLMs, combining 
 An Agent consists of:
 
 1. **Base Components**
-
    - Completion Model (e.g., GPT-4, Claude)
    - System Prompt (preamble)
    - Configuration (temperature, max tokens)
 
 2. **Context Management**
-
    - Static Context: Always available documents
    - Dynamic Context: RAG-based contextual documents
    - Vector Store Integration
@@ -142,13 +140,11 @@ Bear in mind that while prompt hooks are not blocking, it's generally advisable 
 ## Best Practices
 
 1. **Context Management**
-
    - Keep static context minimal and focused
    - Use dynamic context for large knowledge bases
    - Consider context window limitations
 
 2. **Tool Integration**
-
    - Prefer static tools for core functionality
    - Use dynamic tools for context-specific operations
    - Implement proper error handling in tools

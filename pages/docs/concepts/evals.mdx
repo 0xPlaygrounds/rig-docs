@@ -1,0 +1,212 @@
+---
+title: Evals
+description: Evaluating LLM outputs with Rig's evals framework.
+---
+
+import { Cards } from "nextra/components";
+
+# Evals Framework
+
+> Requires the `experimental` feature flag: `cargo add rig-core -F experimental`
+
+As of v0.31.0, Rig includes an experimental evaluation framework (`rig::evals`) for testing and measuring the quality of LLM outputs. Evals provide a structured way to assess whether your agents, prompts, and RAG systems produce correct, relevant, and high-quality responses.
+
+## Overview
+
+The evals module is inspired by [OpenAI's evals framework](https://github.com/openai/evals) and provides:
+
+- A core `Eval` trait for defining custom evaluators
+- Built-in metrics: LLM-as-a-judge, LLM scoring, and semantic similarity
+- Structured outcomes: pass, fail, or invalid
+
+## Core Trait: `Eval`
+
+The `Eval` trait is the foundation of the framework:
+
+```rust
+pub trait Eval {
+    type Input;
+    type Output;
+
+    async fn eval(
+        &self,
+        input: Self::Input,
+        output: Self::Output,
+    ) -> Result<EvalOutcome, EvalError>;
+}
+```
+
+Every evaluator takes some input (what was sent to the LLM) and output (what the LLM produced), then returns an `EvalOutcome`:
+
+```rust
+pub enum EvalOutcome {
+    /// The output passed the evaluation criteria
+    Pass,
+    /// The output failed the evaluation criteria
+    Fail,
+    /// The evaluation could not be completed (e.g., parse error)
+    Invalid(String),
+}
+```
+
+## Built-in Metrics
+
+### LLM Judge (`LlmJudgeMetric`)
+
+Uses an LLM to judge whether an output meets certain criteria. You provide a schema type that implements the `Judgment` trait:
+
+```rust
+use rig::evals::{LlmJudgeMetric, Judgment};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
+#[derive(Deserialize, JsonSchema)]
+struct FactualityJudgment {
+    /// Whether the response is factually accurate
+    is_factual: bool,
+    /// Explanation for the judgment
+    reasoning: String,
+}
+
+impl Judgment for FactualityJudgment {
+    fn passed(&self) -> bool {
+        self.is_factual
+    }
+}
+
+let judge = LlmJudgeMetric::<FactualityJudgment>::builder(model)
+    .preamble("You are a factuality judge. Evaluate whether the response is factually accurate.")
+    .build();
+
+let outcome = judge.eval(
+    "What is the capital of France?",
+    "The capital of France is Paris."
+).await?;
+
+assert!(matches!(outcome, EvalOutcome::Pass));
+```
+
+### LLM Judge with Custom Function (`LlmJudgeMetricWithFn`)
+
+Instead of implementing the `Judgment` trait, you can provide a function pointer that determines pass/fail:
+
+```rust
+let judge = LlmJudgeMetric::<MySchema>::builder(model)
+    .preamble("Evaluate the response.")
+    .with_judge_fn(|schema: &MySchema| schema.score > 0.5)
+    .build();
+```
+
+### LLM Score (`LlmScoreMetric`)
+
+Uses an LLM to assign a numerical score to an output:
+
+```rust
+use rig::evals::{LlmScoreMetric, LlmScoreMetricScore};
+
+let scorer = LlmScoreMetric::builder(model)
+    .preamble("Score the response quality from 0 to 10.")
+    .threshold(7.0) // Scores >= 7.0 pass
+    .build();
+
+let outcome = scorer.eval(
+    "Explain quantum entanglement",
+    "Quantum entanglement is when two particles become linked..."
+).await?;
+```
+
+The LLM is asked to return a `LlmScoreMetricScore`:
+
+```rust
+pub struct LlmScoreMetricScore {
+    /// The numerical score
+    pub score: f64,
+    /// Explanation for the score
+    pub reasoning: String,
+}
+```
+
+### Semantic Similarity (`SemanticSimilarityMetric`)
+
+Measures cosine similarity between embeddings of the expected and actual output. This is a non-LLM metric -- it uses embedding models only:
+
+```rust
+use rig::evals::SemanticSimilarityMetric;
+
+let metric = SemanticSimilarityMetric::builder(embedding_model)
+    .threshold(0.85) // Cosine similarity >= 0.85 passes
+    .build();
+
+let outcome = metric.eval(
+    "The cat sat on the mat",    // expected
+    "A cat was sitting on a mat"  // actual
+).await?;
+```
+
+The resulting score is available as a `SemanticSimilarityMetricScore`:
+
+```rust
+pub struct SemanticSimilarityMetricScore {
+    pub similarity: f64,
+}
+```
+
+## Writing Custom Evals
+
+Implement the `Eval` trait for any custom evaluation logic:
+
+```rust
+use rig::evals::{Eval, EvalOutcome, EvalError};
+
+struct LengthCheck {
+    min_length: usize,
+    max_length: usize,
+}
+
+impl Eval for LengthCheck {
+    type Input = String;
+    type Output = String;
+
+    async fn eval(
+        &self,
+        _input: Self::Input,
+        output: Self::Output,
+    ) -> Result<EvalOutcome, EvalError> {
+        let len = output.len();
+        if len >= self.min_length && len <= self.max_length {
+            Ok(EvalOutcome::Pass)
+        } else {
+            Ok(EvalOutcome::Fail)
+        }
+    }
+}
+```
+
+## Best Practices
+
+1. **Combine Metrics**: Use multiple eval metrics together. For example, combine an LLM judge for factuality with semantic similarity for relevance.
+
+2. **Determinism**: LLM-based evals are inherently non-deterministic. Run them multiple times and look at aggregate results for reliable assessments.
+
+3. **Thresholds**: Start with permissive thresholds and tighten them as you understand your system's behavior.
+
+4. **Cost**: LLM-as-a-judge evals incur additional API costs. Consider using cheaper models for judging when possible, and use non-LLM metrics (like semantic similarity) where appropriate.
+
+5. **Invalid Outcomes**: Always handle `EvalOutcome::Invalid` -- it indicates the eval itself failed (e.g., the judge LLM returned unparseable output), not that the tested output was bad.
+
+## Experimental Status
+
+The evals module is behind the `experimental` feature flag. The API may change in future versions as the framework matures. Feedback is welcome -- see the [contributing guide](../how_to_contribute.mdx).
+
+## See Also
+
+- [Extractors](./extractors.mdx) -- Structured data extraction (used internally by LLM judge metrics)
+- [Embeddings](./embeddings.mdx) -- Embedding models (used by semantic similarity metric)
+
+<br />
+
+<Cards.Card
+  title="API Reference (Evals)"
+  href="https://docs.rs/rig-core/0.31.0/rig/evals/index.html"
+  arrow
+/>

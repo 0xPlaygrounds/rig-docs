@@ -134,12 +134,18 @@ While implementing your own tools, you may find that using the raw `serde_json::
 
 Fortunately, the `schemars` crate has a great way to solve this: with a derive macro (and helpers)! By deriving the `schemars::JsonSchema` macro, we can use description helpers to write our JSON schema instead of having to write it all manually.
 
+> **Note:** As of `rig-core` v0.31.0, `schemars` **v1.0** is required. If you were previously using `schemars` v0.8, note the following migration changes:
+>
+> - The `#[schemars(description = "...")]` attribute is replaced by `#[doc]` comments (i.e. standard `///` doc comments) for field descriptions.
+> - The `schema_for!` macro is replaced by `schemars::schema_for!` or `T::json_schema()`.
+> - Add `schemars = "1"` to your `Cargo.toml` dependencies.
+
 ```rust
 #[derive(Deserialize, Serialize, schemars::JsonSchema)]
 struct OperationArgs {
-    #[schemars(description = "The first number to add.")]
+    /// The first number to add.
     x: i32,
-    #[schemars(description = "The first number to add.")]
+    /// The second number to add.
     y: i32,
 }
 ```
@@ -154,19 +160,17 @@ impl Tool for Adder {
     // .. other trait impl parts here
     async fn definition(&self, _prompt: String) -> ToolDefinition {
         // this should technically never error out as it's generated from set codegen
-        let parameters = serde_json::to_value(schema_for!(OperationArgs)).unwrap();
+        let parameters = schemars::schema_for!(OperationArgs);
 
         ToolDefinition {
             name: "add".to_string(),
             description: "Add x and y together".to_string(),
-            parameters,
+            parameters: serde_json::to_value(parameters).unwrap(),
         }
     }
     // .. other trait impl parts here
 }
 ```
-
-Rig currently uses `schemars` v0.8.16. If you're encountering strange errors, you may want to double check the version of your `schemars` crate.
 
 ### Tool Macros
 
@@ -229,7 +233,7 @@ Tools can be added to agents in two ways:
 
 ```rust
 let agent = client
-    .agent("gpt-4")
+    .agent("gpt-5.2")
     .preamble("You are a calculator.")
     .tool(Adder)
     .tool(Subtract)
@@ -240,7 +244,7 @@ let agent = client
 
 ```rust
 let agent = client
-    .agent("gpt-4")
+    .agent("gpt-5.2")
     .preamble("You are a calculator.")
     .dynamic_tools(2, vector_store_index, toolset)
     .build();
@@ -278,6 +282,6 @@ For more information on integrating tools with specific LLM providers, see the p
 
 <Cards.Card
   title="API Reference (Tools)"
-  href="https://docs.rs/rig-core/latest/rig/tool/index.html"
+  href="https://docs.rs/rig-core/0.31.0/rig/tool/index.html"
   arrow
 />

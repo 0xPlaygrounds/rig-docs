@@ -17,7 +17,9 @@ The in-memory vector store is Rig's default vector store implementation, include
 - Automatic or custom document ID generation
 - Multiple embedding support per document
 - Cosine similarity search
+- Configurable index strategies (brute-force or LSH)
 - Flexible document schema support
+- Automatic `Tool` implementation for agent integration
 
 ## Implementation Details
 
@@ -80,6 +82,57 @@ Memory layout example:
 - Maintains scores using ordered floating-point comparisons
 - Supports multiple embeddings per document with best-match selection
 
+### Core Traits
+
+As of v0.31.0, the vector store system is built around these traits:
+
+- **`VectorStoreIndex`**: The primary trait for querying a vector store by similarity. Types implementing this trait automatically implement the `Tool` trait, meaning any vector store index can be used as an agent tool.
+- **`InsertDocuments`**: Trait for inserting documents and their embeddings into a vector store (replaces the old `VectorStore` trait).
+- **`VectorStoreIndexDyn`**: Type-erased version for dynamic dispatch scenarios.
+
+```rust
+/// Trait for querying a vector store by similarity.
+pub trait VectorStoreIndex: Send + Sync {
+    async fn top_n(
+        &self,
+        request: VectorSearchRequest,
+    ) -> Result<Vec<(f64, String, serde_json::Value)>, VectorStoreError>;
+
+    async fn top_n_ids(
+        &self,
+        request: VectorSearchRequest,
+    ) -> Result<Vec<(f64, String)>, VectorStoreError>;
+}
+
+/// Trait for inserting documents and embeddings into a vector store.
+pub trait InsertDocuments: Send + Sync {
+    async fn add_documents(
+        &mut self,
+        documents: Vec<(String, OneOrMany<Embedding>)>,
+    ) -> Result<(), VectorStoreError>;
+}
+```
+
+### Index Strategies
+
+v0.31.0 introduces configurable index strategies via the `IndexStrategy` enum:
+
+- **Brute-force** (default): Linear scan with cosine similarity. Best for small datasets.
+- **LSH** (Locality-Sensitive Hashing): Available via the `rig::vector_store::lsh` module for approximate nearest-neighbor search on larger datasets.
+
+### Vector Store as a Tool
+
+Types implementing `VectorStoreIndex` automatically implement the `Tool` trait. This means you can add a vector store index directly as a tool to an agent:
+
+```rust
+let agent = openai.agent("gpt-4o")
+    .preamble("You can search a knowledge base.")
+    .tool(vector_store_index)
+    .build();
+```
+
+The tool will accept a search query and return matching documents as `VectorStoreOutput`.
+
 ### Document Management
 
 Three ways to add documents:
@@ -111,6 +164,50 @@ let store = InMemoryVectorStore::from_documents_with_id_f(
 );
 ```
 
+## Querying with VectorSearchRequest
+
+As of v0.31.0, vector store queries are built using `VectorSearchRequest`, which supports filtering:
+
+```rust
+use rig::vector_store::{VectorStoreIndex, VectorSearchRequest};
+use rig::vector_store::request::Filter;
+
+// Simple query
+let results = index.top_n(
+    VectorSearchRequest::builder("search query", 5).build()
+).await?;
+
+// Query with a score threshold
+let results = index.top_n(
+    VectorSearchRequest::builder("search query", 5)
+        .threshold(0.7)
+        .build()
+).await?;
+
+// Query with filters (for backends that support filtering)
+let results = index.top_n(
+    VectorSearchRequest::builder("search query", 5)
+        .filter(Filter::eq("category", "science"))
+        .build()
+).await?;
+```
+
+The `Filter` enum provides a backend-agnostic way to express filter conditions:
+
+```rust
+pub enum Filter {
+    Eq(String, serde_json::Value),
+    Ne(String, serde_json::Value),
+    Gt(String, serde_json::Value),
+    Lt(String, serde_json::Value),
+    And(Vec<Filter>),
+    Or(Vec<Filter>),
+    // ... other variants
+}
+```
+
+Backends can implement the `SearchFilter` trait to translate these canonical filters into their native query language.
+
 ## Special Considerations
 
 ### 1. Memory Usage
@@ -123,8 +220,9 @@ let store = InMemoryVectorStore::from_documents_with_id_f(
 
 - Fast lookups using HashMap for document retrieval
 - Efficient top-N selection using BinaryHeap
-- O(n) complexity for vector similarity search
+- O(n) complexity for vector similarity search (brute-force strategy)
 - Best for small to medium-sized datasets
+- Consider LSH indexing for larger datasets
 
 ### 3. Document Storage
 
@@ -138,29 +236,33 @@ let store = InMemoryVectorStore::from_documents_with_id_f(
 use rig::providers::openai;
 use rig::embeddings::EmbeddingsBuilder;
 use rig::vector_store::in_memory_store::InMemoryVectorStore;
+use rig::vector_store::{VectorStoreIndex, VectorSearchRequest, InsertDocuments};
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
+    let openai = openai::Client::from_env();
+    let model = openai.embedding_model(openai::TEXT_EMBEDDING_ADA_002);
+
     // Initialize store
     let mut store = InMemoryVectorStore::default();
 
     // Create embeddings
-    let embeddings = EmbeddingsBuilder::new(model)
+    let embeddings = EmbeddingsBuilder::new(model.clone())
         .simple_document("doc1", "First document content")
         .simple_document("doc2", "Second document content")
         .build()
         .await?;
 
-    // Add documents to store
-    store.add_documents(embeddings);
+    // Add documents to store (uses InsertDocuments trait)
+    store.add_documents(embeddings).await?;
 
     // Create vector store index
     let index = store.index(model);
 
-    // Search similar documents
-    let results = store
-        .top_n::<Document>("search query", 5)
-        .await?;
+    // Search similar documents using VectorSearchRequest
+    let results = index.top_n(
+        VectorSearchRequest::builder("search query", 5).build()
+    ).await?;
 
     Ok(())
 }
@@ -172,61 +274,51 @@ async fn main() -> Result<(), anyhow::Error> {
 
 The core search implementation:
 
-```rust filename=rig-core/src/vector_store/in_memory_store.rs [67:103]
+```rust filename=rig-core/src/vector_store/in_memory_store.rs
+/// Implement vector search on [InMemoryVectorStore].
+fn vector_search(&self, prompt_embedding: &Embedding, n: usize) -> EmbeddingRanking<D> {
+    // Sort documents by best embedding distance
+    let mut docs = BinaryHeap::new();
 
-    /// Implement vector search on [InMemoryVectorStore].
-    /// To be used by implementations of [VectorStoreIndex::top_n] and [VectorStoreIndex::top_n_ids] methods.
-    fn vector_search(&self, prompt_embedding: &Embedding, n: usize) -> EmbeddingRanking<D> {
-        // Sort documents by best embedding distance
-        let mut docs = BinaryHeap::new();
+    for (id, (doc, embeddings)) in self.embeddings.iter() {
+        // Get the best context for the document given the prompt
+        if let Some((distance, embed_doc)) = embeddings
+            .iter()
+            .map(|embedding| {
+                (
+                    OrderedFloat(embedding.cosine_similarity(prompt_embedding, false)),
+                    &embedding.document,
+                )
+            })
+            .max_by(|a, b| a.0.cmp(&b.0))
+        {
+            docs.push(Reverse(RankingItem(distance, id, doc, embed_doc)));
+        };
+    }
 
-        for (id, (doc, embeddings)) in self.embeddings.iter() {
-            // Get the best context for the document given the prompt
-            if let Some((distance, embed_doc)) = embeddings
-                .iter()
-                .map(|embedding| {
-                    (
-                        OrderedFloat(embedding.cosine_similarity(prompt_embedding, false)),
-                        &embedding.document,
-                    )
-                })
-                .max_by(|a, b| a.0.cmp(&b.0))
-            {
-                docs.push(Reverse(RankingItem(distance, id, doc, embed_doc)));
-            };
-
+    // Return top-n results
+    // ...
+}
 ```
 
 ### Error Handling
 
-The vector store operations can produce several error types:
+Vector store operations can produce errors via the `VectorStoreError` enum:
 
 - `EmbeddingError`: Issues with embedding generation
 - `JsonError`: Document serialization/deserialization errors
 - `DatastoreError`: General storage operations errors
 - `MissingIdError`: When a requested document ID doesn't exist
-
-Example error handling:
-
-```rust
-match store.get_document::<MyDoc>("doc1") {
-    Ok(Some(doc)) => println!("Found document: {:?}", doc),
-    Ok(None) => println!("Document not found"),
-    Err(VectorStoreError::JsonError(e)) => println!("Failed to deserialize: {}", e),
-    Err(e) => println!("Other error: {}", e),
-}
-```
+- `FilterError`: When constructing or converting filter expressions
 
 ## Best Practices
 
 1. **Memory Management**:
-
    - Monitor memory usage with large datasets
    - Consider chunking large document additions
    - Use cloud-based vector stores for production deployments
 
 2. **Document Structure**:
-
    - Keep documents serializable
    - Avoid extremely large arrays
    - Consider using custom ID generation for meaningful identifiers
@@ -235,19 +327,17 @@ match store.get_document::<MyDoc>("doc1") {
    - Pre-allocate store capacity when possible
    - Batch document additions
    - Use appropriate embedding dimensions
+   - Consider LSH indexing for datasets exceeding a few thousand documents
 
 ## Limitations
 
 1. **Scalability**:
-
    - Limited by available RAM
    - No persistence between program runs
    - Single-machine only
 
 2. **Features**:
-
-   - No built-in indexing optimizations
-   - No metadata filtering
+   - Filtering support is basic compared to dedicated vector databases
    - No automatic persistence
 
 3. **Production Use**:
@@ -255,7 +345,7 @@ match store.get_document::<MyDoc>("doc1") {
    - Consider cloud-based alternatives for production
    - No built-in backup/recovery mechanisms
 
-For production deployments, consider using one of Rig's other vector store integrations (MongoDB, LanceDB, Neo4j, or Qdrant) which offer persistence and better scalability.
+For production deployments, consider using one of Rig's other vector store integrations (MongoDB, LanceDB, Neo4j, Qdrant, SQLite, SurrealDB, Milvus, ScyllaDB, or AWS S3Vectors) which offer persistence and better scalability.
 
 ## Thread Safety
 
@@ -265,18 +355,19 @@ For concurrent write access, consider wrapping the store in a synchronization pr
 
 ## Comparison with Other Vector Stores
 
-| Feature            | In-Memory | MongoDB | Qdrant | LanceDB |
-| ------------------ | --------- | ------- | ------ | ------- |
-| Persistence        | ❌        | ✅      | ✅     | ✅      |
-| Horizontal Scaling | ❌        | ✅      | ✅     | ❌      |
-| Setup Complexity   | Low       | Medium  | Medium | Low     |
-| Memory Usage       | High      | Low     | Medium | Low     |
-| Query Speed        | Fast      | Medium  | Fast   | Fast    |
+| Feature            | In-Memory | MongoDB | Qdrant | LanceDB | SQLite |
+| ------------------ | --------- | ------- | ------ | ------- | ------ |
+| Persistence        | No        | Yes     | Yes    | Yes     | Yes    |
+| Horizontal Scaling | No        | Yes     | Yes    | No      | No     |
+| Setup Complexity   | Low       | Medium  | Medium | Low     | Low    |
+| Memory Usage       | High      | Low     | Medium | Low     | Low    |
+| Query Speed        | Fast      | Medium  | Fast   | Fast    | Medium |
+| Filtering          | Basic     | Rich    | Rich   | Rich    | SQL    |
 
 <br />
 <Cards>
   <Cards.Card
     title="API Reference (docs.rs)"
-    href="https://docs.rs/rig-core/latest/rig_core/vector_store/in_memory_store/index.html"
+    href="https://docs.rs/rig-core/0.31.0/rig/vector_store/in_memory_store/index.html"
   />
 </Cards>
