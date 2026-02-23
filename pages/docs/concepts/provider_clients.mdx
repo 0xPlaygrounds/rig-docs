@@ -3,62 +3,163 @@ title: Clients
 description: This section contains the concepts for Rig.
 ---
 
-# Model provider clients in Rig
+import { Cards } from "nextra/components";
+
+# Model Provider Clients in Rig
 
 A provider client (or a model provider client) is an entity represented as a struct that can create clients for different types of LLMs or models, depending on the features supported by a given model provider.
 
-Since the introduction of `rig::client::DynClientBuilder` (`rig` v0.13), clients now must implement the `rig::client::ProviderClient` trait. The trait signature can be found below:
+## Client Architecture (v0.31.0)
+
+In v0.31.0, the provider client system has been significantly redesigned around a generic `Client` struct and a capability-based type system.
+
+### The `Client` Struct
+
+At the core is `rig::client::Client<Ext, H>`, a generic struct parameterized by:
+
+- `Ext`: A provider extension (implementing the `Provider` trait) that defines provider-specific behavior
+- `H`: An API key type (implementing the `ApiKey` trait)
 
 ```rust
-pub trait ProviderClient:
-    AsCompletion + AsTranscription + AsEmbeddings + AsImageGeneration + AsAudioGeneration + Debug
-{
-    /// Create a client from the process's environment.
-    /// Panics if an environment is improperly configured.
-    fn from_env() -> Self
-    where
-        Self: Sized;
+use rig::providers::openai;
 
-    // .. there are other methods here, but as they already have a default implementation
-    // for the most part we don't need to concern ourselves with them
+// Create a client from environment variables
+let client = openai::Client::from_env();
+
+// Or with an explicit API key
+let client = openai::Client::new("your-api-key");
+```
+
+### Provider Trait
+
+The `Provider` trait abstracts over provider-specific extensions and specifically handles building out the client with the provider extension. URL construction and custom instantiation are added as provided methods, should you want to implement your own version of this.
+
+```rust
+pub trait Provider: Sized {
+    type Builder: ProviderBuilder;
+
+    const VERIFY_PATH: &'static str;
+
+    // Required method
+    fn build<H>(
+        builder: &ClientBuilder<Self::Builder, <Self::Builder as ProviderBuilder>::ApiKey, H>,
+    ) -> Result<Self>;
 }
 ```
 
-`ProviderClient` currently requires the following traits:
+Each provider module (e.g., `rig::providers::openai`, `rig::providers::anthropic`) implements this trait.
 
-- `Debug`
-- `AsCompletion` (the trait for creating a completion model client; additionally offers methods for agents and JSON extractors)
-- `AsTranscription` (the trait for creating a transcription model client)
-- `AsEmbedding` (the trait for creating a embedding model client)
-- `AsImageGeneration` (the trait for creating an image generation model client)
-- `AsAudioGeneration` (the trait for creating an audio generation model client)
+### ProviderBuilder Trait
 
-Each of the above traits (besides `Debug` which is a standard trait) is relatively easy to implement.
-
-While this trait is slightly confusing, your provider does not have to actually have to support everything listed. Fortunately, there is a macro called `impl_conversion_traits` which allows us to auto-implement whichever traits a given provider doesn't support by simply returning None.
-
-An example of this can be found below:
+The `ProviderBuilder` trait provides a builder pattern for configuring providers:
 
 ```rust
-// note: when adding a model to the rig-core codebase, `rig` should be `crate`
-rig::impl_conversion_traits!(
-    AsEmbeddings,
-    AsTranscription,
-    AsImageGeneration,
-    AsAudioGeneration for Client
-);
+pub trait ProviderBuilder {
+    type Output: Provider;
+    type ApiKey;
+
+    const BASE_URL: &'static str;
+
+    // Provided method
+    fn finish<H>(
+        &self,
+        builder: ClientBuilder<Self, Self::ApiKey, H>,
+    ) -> Result<ClientBuilder<Self, Self::ApiKey, H>> { ... }
+}
 ```
 
-Because this returns None, if you attempt to create an embedding model client (for example) from this particular Client using `rig::client::DynClientBuilder`, it will simply return None rather than a model.
+### Capabilities System
 
-## How to write your client implementation
+Rig introduces a type-level capabilities system via the `Capabilities` and `Capability` traits. This allows compile-time checking of what a provider supports:
 
-To implement a given trait, you simply need to implement the corresponding client trait. For example - the trait for `AsCompletion` is `rig::client::completion::CompletionClient`. Because `AsCompletion` is already implemented for `T: Clone` (meaning every single type), as long as you're able to derive Clone for your client, `AsCompletion` will automatically be implemented - which automatically satisfies the relevant requirement for `ProviderClient`. This is the same across all the other traits.
+```rust
+pub trait Capabilities<H = Client> {
+    type Completion: Capability;
+    type Embeddings: Capability;
+    type Transcription: Capability;
+    type ModelListing: Capability;
+    type ImageGeneration: Capability;
+    type AudioGeneration: Capability;
+}
 
-As Rig is currently an unstable crate (SemVer dictates that non-stable crates must stay at v0.x), this page may be updated in accordance with the state of the crate.
+pub trait Capability {
+    const CAPABLE: bool;
+}
+```
 
-## Using the dynamic client builder
+### ProviderClient Trait
 
-If you're running a multi-agent service, you may find yourself needing to pull from more than one provider at any given time. For this type of use case, the `rig::client::DynClientBuilder` may prove very useful.
+The `ProviderClient` trait provides a unified interface for creating clients:
 
-Interested in code snippets? Check out [our GitHub repo example](https://github.com/0xPlaygrounds/rig/blob/main/rig-core/examples/dyn_client.rs) where we create both an OpenAI and Anthropic client, then try to prompt them both and print the result.
+```rust
+pub trait ProviderClient {
+    type Input;
+
+    /// Create a client from the process's environment.
+    fn from_env() -> Self where Self: Sized;
+
+    fn from_val(input: Self::Input) -> Self;
+}
+```
+
+### Supported Capabilities
+
+Provider clients can support any combination of the following:
+
+| Capability       | Trait                   | Description                                                   |
+| ---------------- | ----------------------- | ------------------------------------------------------------- |
+| Text Completion  | `CompletionClient`      | Create completion models for text generation                  |
+| Embeddings       | `EmbeddingsClient`      | Create embedding models for vector representations            |
+| Transcription    | `TranscriptionClient`   | Create transcription models for speech-to-text                |
+| Image Generation | `ImageGenerationClient` | Create models for image generation (requires `image` feature) |
+| Audio Generation | `AudioGenerationClient` | Create models for text-to-speech (requires `audio` feature)   |
+| Model Listing    | `ModelListingClient`    | List available models from the provider                       |
+| Verification     | `VerifyClient`          | Verify client credentials and connectivity                    |
+
+### Auth Types
+
+v0.31.0 provides typed authentication:
+
+- `BearerAuth`: API key inserted as a bearer token in request headers
+- `NeedsApiKey`: Marker indicating the provider requires an API key
+- `Nothing`: Marker for providers that don't need an API key (e.g., local Ollama)
+
+## Creating Models
+
+Once you have a client, create models using the corresponding client trait methods:
+
+```rust
+use rig::client::CompletionClient;
+
+let openai = openai::Client::from_env();
+
+// Create a completion model
+let model = openai.completion_model("gpt-5.2");
+
+// Create an embedding model
+let embedding_model = openai.embedding_model("text-embedding-3-small");
+
+// Create an agent (shorthand for completion_model + AgentBuilder)
+let agent = openai.agent("gpt-5.2")
+    .preamble("You are a helpful assistant.")
+    .build();
+```
+
+## How to Write a Custom Provider
+
+To implement a custom provider, you need to:
+
+1. Implement the `Provider` trait for your extension type
+2. Implement `CompletionModel` for your completion model type
+3. Optionally implement `EmbeddingModel`, `TranscriptionModel`, etc.
+4. Implement the relevant client traits (`CompletionClient`, `EmbeddingsClient`, etc.)
+
+For a detailed walkthrough, see the [Write Your Own Provider](../../guides/extension/write_your_own_provider.mdx) guide.
+
+<br />
+
+<Cards.Card
+  title="API Reference (Client)"
+  href="https://docs.rs/rig-core/0.31.0/rig/client/index.html"
+  arrow
+/>

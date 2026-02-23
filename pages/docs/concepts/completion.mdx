@@ -33,7 +33,38 @@ async fn prompt(&self, prompt: &str) -> Result<String, PromptError>;
 async fn chat(&self, prompt: &str, history: Vec<Message>) -> Result<String, PromptError>;
 ```
 
-### 2. Low-Level Control
+#### `TypedPrompt` Trait
+
+- Structured output interface for typed completions
+- Returns deserialized structured data instead of raw strings
+- The target type must implement `serde::Deserialize` and `schemars::JsonSchema`
+
+```rust
+pub trait TypedPrompt: WasmCompatSend + WasmCompatSync {
+    type TypedRequest<'a, T>: IntoFuture<Output = Result<T, StructuredOutputError>>
+       where Self: 'a,
+             T: JsonSchema + DeserializeOwned + WasmCompatSend + 'a;
+
+    // Required method
+    fn prompt_typed<T>(
+        &self,
+        prompt: impl Into<Message> + WasmCompatSend,
+    ) -> Self::TypedRequest<'_, T>
+       where T: JsonSchema + DeserializeOwned + WasmCompatSend;
+}
+```
+
+This is useful when you need the LLM to return structured data (e.g., JSON conforming to a specific schema) rather than free-form text. See the [Structured Output](#structured-output) section below for more details.
+
+### 2. Streaming Interfaces
+
+Rig provides streaming counterparts for all high-level traits. See [Streaming](./streaming.mdx) for full details.
+
+- `StreamingPrompt`: Streaming one-shot prompts
+- `StreamingChat`: Streaming chat with history
+- `StreamingCompletion`: Low-level streaming completion interface
+
+### 3. Low-Level Control
 
 #### `Completion` Trait
 
@@ -41,80 +72,51 @@ async fn chat(&self, prompt: &str, history: Vec<Message>) -> Result<String, Prom
 - Access to raw completion responses
 - Tool call handling
 
-Reference to implementation:
-
-```rust filename="rig-core/src/completion.rs [165:246]"
-...
-        chat_history: Vec<Message>,
-    ) -> impl std::future::Future<Output = Result<String, PromptError>> + Send;
-}
-
-/// Trait defininig a low-level LLM completion interface
+```rust
 pub trait Completion<M: CompletionModel> {
     /// Generates a completion request builder for the given `prompt` and `chat_history`.
-    /// This function is meant to be called by the user to further customize the
-    /// request at prompt time before sending it.
-    ///
-    /// ❗IMPORTANT: The type that implements this trait might have already
-    /// populated fields in the builder (the exact fields depend on the type).
-    /// For fields that have already been set by the model, calling the corresponding
-    /// method on the builder will overwrite the value set by the model.
-    ///
-    /// For example, the request builder returned by [`Agent::completion`](crate::agent::Agent::completion) will already
-    /// contain the `preamble` provided when creating the agent.
+    /// Fields pre-populated by the implementing type (e.g., Agent preamble) can be
+    /// overwritten by calling the corresponding method on the builder.
     fn completion(
         &self,
         prompt: &str,
         chat_history: Vec<Message>,
-    ) -> impl std::future::Future<Output = Result<CompletionRequestBuilder<M>, CompletionError>> + Send;
-}
-
-/// General completion response struct that contains the high-level completion choice
-/// and the raw response.
-#[derive(Debug)]
-pub struct CompletionResponse<T> {
-    /// The completion choice returned by the completion model provider
-    pub choice: ModelChoice,
-    /// The raw response returned by the completion model provider
-    pub raw_response: T,
-}
-
-/// Enum representing the high-level completion choice returned by the completion model provider.
-#[derive(Debug)]
-pub enum ModelChoice {
-    /// Represents a completion response as a message
-    Message(String),
-    /// Represents a completion response as a tool call of the form
-    /// `ToolCall(function_name, function_params)`.
-    ToolCall(String, serde_json::Value),
-}
-
-/// Trait defining a completion model that can be used to generate completion responses.
-/// This trait is meant to be implemented by the user to define a custom completion model,
-/// either from a third party provider (e.g.: OpenAI) or a local model.
-pub trait CompletionModel: Clone + Send + Sync {
-    /// The raw response type returned by the underlying completion model.
-    type Response: Send + Sync;
-
-    /// Generates a completion response for the given completion request.
-    fn completion(
-        &self,
-        request: CompletionRequest,
-    ) -> impl std::future::Future<Output = Result<CompletionResponse<Self::Response>, CompletionError>>
-           + Send;
-
-    /// Generates a completion request builder for the given `prompt`.
-    fn completion_request(&self, prompt: &str) -> CompletionRequestBuilder<Self> {
-        CompletionRequestBuilder::new(self.clone(), prompt.to_string())
-    }
+    ) -> impl Future<Output = Result<CompletionRequestBuilder<M>, CompletionError>> + Send;
 }
 ```
 
 #### `CompletionModel` Trait
 
-- Provider interface implementation
-- Raw request handling
-- Response parsing and error management
+The provider interface that must be implemented for each LLM backend. In v0.31.0, this trait lives at `rig::completion::request::CompletionModel` (re-exported via `rig::completion`).
+
+```rust
+pub trait CompletionModel:
+    Clone
+    + WasmCompatSend
+    + WasmCompatSync {
+    type Response: WasmCompatSend + WasmCompatSync + Serialize + DeserializeOwned;
+    type StreamingResponse: Clone + Unpin + WasmCompatSend + WasmCompatSync + Serialize + DeserializeOwned + GetTokenUsage;
+    type Client;
+
+    // Required methods
+    fn make(client: &Self::Client, model: impl Into<String>) -> Self;
+    fn completion(
+        &self,
+        request: CompletionRequest,
+    ) -> impl Future<Output = Result<CompletionResponse<Self::Response>, CompletionError>> + WasmCompatSend;
+
+    fn stream(
+        &self,
+        request: CompletionRequest,
+    ) -> impl Future<Output = Result<StreamingCompletionResponse<Self::StreamingResponse>, CompletionError>> + WasmCompatSend;
+
+    // Provided method
+    fn completion_request(
+        &self,
+        prompt: impl Into<Message>,
+    ) -> CompletionRequestBuilder<Self> { ... }
+}
+```
 
 ## Request Building
 
@@ -132,51 +134,94 @@ let request = model.completion_request("prompt")
     .build();
 ```
 
-### Request Components
-
-1. **Core Elements**
-
-   - Prompt text
-   - System preamble
-   - Chat history
-   - Temperature
-   - Max tokens
-
-2. **Context Management**
-
-   - Document attachments
-   - Metadata handling
-   - Formatting controls
-
-3. **Tool Integration**
-   - Tool definitions
-   - Parameter validation
-   - Response parsing
-
 ## Response Handling
 
 ### CompletionResponse
 
-Structured response type with:
+The `CompletionResponse` struct wraps the model's response along with the raw provider-specific data:
 
 ```rust
-enum ModelChoice {
-    Message(String),
-    ToolCall(String, Value)
-}
-
-struct CompletionResponse<T> {
-    choice: ModelChoice,
-    raw_response: T,
+pub struct CompletionResponse<T> {
+    /// One or more assistant content items (text, tool calls, reasoning, etc.)
+    pub choice: OneOrMany<AssistantContent>,
+    /// The raw response from the provider
+    pub raw_response: T,
 }
 ```
+
+### AssistantContent
+
+In v0.31.0, the old `ModelChoice` enum has been replaced by a richer `AssistantContent` enum (in `rig::completion::message`) that supports multimodal responses:
+
+```rust
+pub enum AssistantContent {
+    /// Plain text response
+    Text(Text),
+    /// A tool call requested by the model
+    ToolCall(ToolCall),
+    /// Reasoning/chain-of-thought content (for models that support it)
+    Reasoning(Reasoning),
+}
+```
+
+The `Text` struct wraps a string, while `ToolCall` contains the tool call ID, function name, and arguments:
+
+```rust
+pub struct ToolCall {
+    pub id: String,
+    pub function: ToolFunction,
+}
+
+pub struct ToolFunction {
+    pub name: String,
+    pub arguments: serde_json::Value,
+}
+```
+
+### Message Types
+
+The `Message` enum represents conversation messages with rich content support:
+
+```rust
+pub enum Message {
+    User { content: OneOrMany<UserContent> },
+    Assistant { content: OneOrMany<AssistantContent> },
+}
+```
+
+`UserContent` supports text, images, audio, documents, video, and tool results:
+
+```rust
+pub enum UserContent {
+    Text(Text),
+    ToolResult(ToolResult),
+    Image(Image),
+    Audio(Audio),
+    Document(Document),
+    Video(Video),
+}
+```
+
+### Token Usage
+
+v0.31.0 adds a `Usage` struct and the `GetTokenUsage` trait for tracking token consumption:
+
+```rust
+pub struct Usage {
+    pub prompt_tokens: u64,
+    pub completion_tokens: u64,
+    pub total_tokens: u64,
+}
+```
+
+Implement the `GetTokenUsage` trait on your provider's raw response type to expose token metrics.
 
 ### Error Handling
 
 Comprehensive error types:
 
 ```rust
-enum CompletionError {
+pub enum CompletionError {
     HttpError(reqwest::Error),
     JsonError(serde_json::Error),
     RequestError(Box<dyn Error>),
@@ -185,13 +230,23 @@ enum CompletionError {
 }
 ```
 
+For structured output, there is an additional error type:
+
+```rust
+pub enum StructuredOutputError {
+    CompletionError(CompletionError),
+    JsonError(serde_json::Error),
+    // ...
+}
+```
+
 ## Usage Patterns
 
 ### Basic Completion
 
 ```rust
-let openai = Client::new(api_key);
-let model = openai.completion_model("gpt-4");
+let openai = openai::Client::from_env();
+let model = openai.completion_model("gpt-4o");
 
 let response = model
     .prompt("Explain quantum computing")
@@ -201,7 +256,9 @@ let response = model
 ### Contextual Chat
 
 ```rust
-let chat_response = model
+use rig::completion::Message;
+
+let chat_response = agent
     .chat(
         "Continue the discussion",
         vec![Message::user("Previous context")]
@@ -212,13 +269,34 @@ let chat_response = model
 ### Advanced Request Configuration
 
 ```rust
-let request = model
+let response = model
     .completion_request("Complex query")
     .preamble("Expert system")
     .temperature(0.8)
     .documents(context)
     .tools(available_tools)
     .send()
+    .await?;
+```
+
+### Structured Output
+
+Using the `TypedPrompt` trait (implemented by `Agent`), you can get structured responses:
+
+```rust
+use schemars::JsonSchema;
+use serde::Deserialize;
+
+#[derive(Deserialize, JsonSchema)]
+struct SentimentAnalysis {
+    /// The sentiment score from -1.0 to 1.0
+    score: f64,
+    /// The sentiment label
+    label: String,
+}
+
+let result: SentimentAnalysis = agent
+    .prompt_typed("Analyze the sentiment of: 'I love this product!'")
     .await?;
 ```
 
@@ -245,7 +323,9 @@ impl CompletionModel for CustomProvider {
 
    - Use `Prompt` for simple interactions
    - Use `Chat` for conversational flows
+   - Use `TypedPrompt` for structured data extraction
    - Use `Completion` for fine-grained control
+   - Use `StreamingPrompt`/`StreamingChat` when you need incremental output
 
 2. **Error Handling**
 
@@ -256,18 +336,19 @@ impl CompletionModel for CustomProvider {
 3. **Resource Management**
    - Reuse model instances
    - Batch similar requests
-   - Monitor token usage
+   - Monitor token usage via the `GetTokenUsage` trait
 
 ## See Also
 
 - [Agent System](./agent.mdx)
 - [Tool Integration](./tools.mdx)
+- [Streaming](./streaming.mdx)
 - [Provider Implementation](../integrations/model_providers.mdx)
 
 <br />
 
 <Cards.Card
   title="API Reference (Completion)"
-  href="https://docs.rs/rig-core/latest/rig/completion/index.html"
+  href="https://docs.rs/rig-core/0.31.0/rig/completion/index.html"
   arrow
 />

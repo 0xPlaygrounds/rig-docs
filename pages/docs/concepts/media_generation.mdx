@@ -1,0 +1,249 @@
+---
+title: Image, Audio & Transcription
+description: Image generation, audio generation (TTS), and audio transcription in Rig.
+---
+
+import { Cards } from "nextra/components";
+
+# Image, Audio & Transcription
+
+As of v0.31.0, Rig provides unified abstractions for image generation, audio generation (text-to-speech), and audio transcription (speech-to-text) alongside its core text completion and embedding capabilities.
+
+## Image Generation
+
+> Requires the `image` feature flag: `cargo add rig-core -F image`
+
+The `rig::image_generation` module provides the `ImageGenerationModel` trait for generating images from text prompts.
+
+### Core Types
+
+```rust
+pub trait ImageGenerationModel: Clone + Send + Sync {
+    type Response: Send + Sync;
+
+    async fn image_generation(
+        &self,
+        request: ImageGenerationRequest,
+    ) -> Result<ImageGenerationResponse, ImageGenerationError>;
+}
+```
+
+### Request Building
+
+Use `ImageGenerationRequestBuilder` to construct requests:
+
+```rust
+use rig::image_generation::{ImageGeneration, ImageGenerationRequest};
+
+let response = model
+    .image_generation_request("A futuristic city at sunset")
+    .size("1024x1024")
+    .send()
+    .await?;
+
+// Access the generated image
+let image_data = response.image;
+```
+
+### ImageGenerationResponse
+
+```rust
+pub struct ImageGenerationResponse {
+    /// The generated image data
+    pub image: Vec<u8>,
+    /// The raw provider response
+    pub raw_response: serde_json::Value,
+}
+```
+
+### Using with Agents
+
+Image generation models can be accessed through providers that support them:
+
+```rust
+let openai = openai::Client::from_env();
+let dalle = openai.image_generation_model("dall-e-3");
+
+let response = dalle
+    .image_generation_request("A robot painting a landscape")
+    .send()
+    .await?;
+```
+
+## Audio Generation (Text-to-Speech)
+
+> Requires the `audio` feature flag: `cargo add rig-core -F audio`
+
+The `rig::audio_generation` module provides the `AudioGenerationModel` trait for converting text to speech.
+
+### Core Types
+
+```rust
+pub trait AudioGenerationModel:
+    Sized
+    + Clone
+    + WasmCompatSend
+    + WasmCompatSync {
+    type Response: Send + Sync;
+    type Client;
+
+    // Required methods
+    fn make(client: &Self::Client, model: impl Into<String>) -> Self;
+    fn audio_generation(
+        &self,
+        request: AudioGenerationRequest,
+    ) -> impl Future<Output = Result<AudioGenerationResponse<Self::Response>, AudioGenerationError>> + Send;
+
+    // Provided method
+    fn audio_generation_request(&self) -> AudioGenerationRequestBuilder<Self> { ... }
+}
+```
+
+### Request Building
+
+```rust
+use rig::audio_generation::AudioGeneration;
+
+let response = model
+    .audio_generation_request("Hello, how can I help you today?")
+    .voice("alloy")
+    .send()
+    .await?;
+
+// Access the generated audio
+let audio_bytes = response.audio;
+```
+
+### AudioGenerationResponse
+
+```rust
+pub struct AudioGenerationResponse {
+    /// The generated audio data
+    pub audio: Vec<u8>,
+    /// The raw provider response
+    pub raw_response: serde_json::Value,
+}
+```
+
+## Audio Transcription (Speech-to-Text)
+
+The `rig::transcription` module provides the `TranscriptionModel` trait for transcribing audio to text.
+
+### Core Trait
+
+```rust
+pub trait TranscriptionModel:
+    Clone
+    + WasmCompatSend
+    + WasmCompatSync {
+    type Response: WasmCompatSend + WasmCompatSync;
+    type Client;
+
+    // Required methods
+    fn make(client: &Self::Client, model: impl Into<String>) -> Self;
+    fn transcription(
+        &self,
+        request: TranscriptionRequest,
+    ) -> impl Future<Output = Result<TranscriptionResponse<Self::Response>, TranscriptionError>> + WasmCompatSend;
+
+    // Provided method
+    fn transcription_request(&self) -> TranscriptionRequestBuilder<Self> { ... }
+}
+```
+
+### Request Building
+
+```rust
+use rig::transcription::Transcription;
+
+let audio_data: Vec<u8> = std::fs::read("audio.mp3")?;
+
+let response = model
+    .transcription_request(audio_data)
+    .language("en")
+    .send()
+    .await?;
+
+println!("Transcription: {}", response.text);
+```
+
+### TranscriptionResponse
+
+```rust
+pub struct TranscriptionResponse {
+    /// The transcribed text
+    pub text: String,
+    /// The raw provider response
+    pub raw_response: serde_json::Value,
+}
+```
+
+## Provider Support
+
+Not all providers support all media types. Here is a summary of current support:
+
+| Provider        | Image Generation | Audio Generation | Transcription |
+| --------------- | ---------------- | ---------------- | ------------- |
+| OpenAI          | Yes (DALL-E)     | Yes (TTS)        | Yes (Whisper) |
+| Other providers | Varies           | Varies           | Varies        |
+
+Check the individual [provider documentation](../integrations/model_providers.mdx) for specific model support.
+
+## Client Trait Integration
+
+These capabilities integrate with the provider client system. Use the corresponding client traits to create models:
+
+```rust
+use rig::client::CompletionClient;
+// Image generation, audio generation, and transcription are accessed
+// through provider-specific methods on the client.
+
+let openai = openai::Client::from_env();
+
+// Completion model
+let gpt4 = openai.completion_model("gpt-4o");
+
+// Embedding model
+let embed = openai.embedding_model("text-embedding-3-small");
+
+// Image generation model (requires `image` feature)
+let dalle = openai.image_generation_model("dall-e-3");
+
+// Audio generation model (requires `audio` feature)
+let tts = openai.audio_generation_model("tts-1");
+
+// Transcription model
+let whisper = openai.transcription_model("whisper-1");
+```
+
+## Best Practices
+
+1. **Feature Flags**: Only enable the feature flags you need (`image`, `audio`) to minimize compile times and binary size.
+
+2. **Error Handling**: Each media type has its own error type (`ImageGenerationError`, `AudioGenerationError`, `TranscriptionError`). Handle them appropriately.
+
+3. **Large Payloads**: Audio and image data can be large. Consider streaming where possible and be mindful of memory usage.
+
+4. **Model Selection**: Different models within the same provider may have different capabilities, pricing, and quality. Refer to provider documentation for guidance.
+
+## See Also
+
+- [Completion](./completion.mdx) -- Text completion
+- [Provider Clients](./provider_clients.mdx) -- Provider client capabilities
+
+<br />
+
+<Cards>
+  <Cards.Card
+    title="API Reference (Image Generation)"
+    href="https://docs.rs/rig-core/0.31.0/rig/image_generation/index.html"
+  />
+  <Cards.Card
+    title="API Reference (Audio Generation)"
+    href="https://docs.rs/rig-core/0.31.0/rig/audio_generation/index.html"
+  />
+  <Cards.Card
+    title="API Reference (Transcription)"
+    href="https://docs.rs/rig-core/0.31.0/rig/transcription/index.html"
+  />
+</Cards>
